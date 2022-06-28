@@ -5,8 +5,10 @@ import com.google.android.exoplayer2.C
 import com.google.android.exoplayer2.Format
 import com.google.android.exoplayer2.extractor.*
 import com.google.android.exoplayer2.extractor.Extractor
+import com.google.android.exoplayer2.extractor.ExtractorsFactory
 import com.google.android.exoplayer2.util.MimeTypes
 import com.google.android.exoplayer2.util.ParsableByteArray
+
 import java.io.IOException
 
 private const val TAG = "Extractor"
@@ -378,5 +380,26 @@ class Extractor : Extractor {
 
     private fun isKeyFrame(): Boolean {
         return currentFrameType == 64 || currentFrameType == 38
+    }
+
+    private enum class ChunkType {
+        VIDEO,
+        AUDIO,
+        VROT,
+        UNKNOWN
+    }
+
+    private enum class ExtractorState {
+        READ_MAIN_HEADER,
+        READ_FRAME_TAG,
+        READ_FRAME_HEADER,
+        READ_FRAME_DATA
+    }
+
+    class Factory : ExtractorsFactory {
+        override fun createExtractors(): Array<Extractor> {
+            Log.d(TAG, "createExtractors")
+            return arrayOf(Extractor())
+        }
     }
 }
