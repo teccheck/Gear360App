@@ -370,14 +370,11 @@ public class JStreamExtractor implements Extractor {
     }
 
     private boolean readFrameSampleData(ExtractorInput input) throws IOException {
-        int read = videoTrack.sampleData(
+        bytesRemainingInCurrentChunk -= videoTrack.sampleData(
                 input,
                 bytesRemainingInCurrentChunk,
                 false
         );
-        bytesRemainingInCurrentChunk -= read;
-
-        Log.d(TAG, "Read: " + read);
 
         boolean done = bytesRemainingInCurrentChunk == 0;
         if (done) {
