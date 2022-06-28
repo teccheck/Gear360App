@@ -38,6 +38,12 @@ class MessageHandler {
                 MessageIds.SHOT_RSP -> {
                     handleMessage(BTShotRsp.fromJson(jsonObject))
                 }
+                MessageIds.COMMAND_RSP -> {
+                    handleMessage(BTCommandRsp.fromJson(jsonObject))
+                }
+                MessageIds.DEVICE_DESC_URL -> {
+                    handleMessage(BTDeviceDescUrlMsg.fromJson(jsonObject))
+                }
                 else -> {
                     Log.w(TAG, "Couldn't handle message with id $msgId")
                 }

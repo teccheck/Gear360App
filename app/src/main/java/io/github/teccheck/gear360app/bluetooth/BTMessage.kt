@@ -10,11 +10,11 @@ object MsgConst {
     const val DESCRIPTION = "description"
     const val TYPE = "type"
     const val MSGID = "msgId"
-    
+
     const val PROPERTIES = "properties"
     const val ITEMS = "items"
     const val ENUM = "enum"
-    
+
     const val OBJECT = "object"
     const val STRING = "string"
 }
@@ -309,6 +309,31 @@ class BTCommandReq(private val action: Action) : BTMessage(
     }
 }
 
+class BTCommandRsp(val actionName: String, val response: String, val responseCode: Int) : BTMessage(
+    "Command response Message",
+    "Message structure in JSON for Command response",
+    MsgConst.OBJECT
+) {
+
+    fun isSuccess(actionName: String): Boolean {
+        return this.actionName == actionName && responseCode == 100
+    }
+
+    companion object {
+        fun fromJson(jsonObject: JSONObject): BTCommandRsp {
+            val properties = jsonObject.getJSONObject(MsgConst.PROPERTIES)
+            val result = properties.getJSONObject("result")
+
+            val response = result.getString(MsgConst.ENUM)
+            val actionName = result.getString(MsgConst.DESCRIPTION)
+
+            val responseCode = properties.getJSONObject("r-code").getInt(MsgConst.DESCRIPTION)
+
+            return BTCommandRsp(actionName, response, responseCode)
+        }
+    }
+}
+
 class BTDateTimeReq : BTMessage(
     "Date-Time request Message",
     "Message structure in JSON for Date-Time request",
@@ -401,6 +426,22 @@ class BTShotRsp(
                 info.getJSONObject("capturable-count").getInt(MsgConst.DESCRIPTION)
 
             return BTShotRsp(resultEnum, resultType, resultCode, recordableTime, capturableCount)
+        }
+    }
+}
+
+class BTDeviceDescUrlMsg(val url: String) : BTMessage(
+    "Device Description URL Message",
+    "Message structure in JSON for Device Description URL",
+    MsgConst.OBJECT
+) {
+    companion object {
+        fun fromJson(jsonObject: JSONObject): BTDeviceDescUrlMsg {
+            val url = jsonObject.getJSONObject(MsgConst.PROPERTIES)
+                .getJSONObject("url")
+                .getString(MsgConst.DESCRIPTION)
+
+            return BTDeviceDescUrlMsg(url)
         }
     }
 }
