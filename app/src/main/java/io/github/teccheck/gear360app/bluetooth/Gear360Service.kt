@@ -21,7 +21,6 @@ private const val SA_TRANSPORT_TYPE = SamAccessoryManager.TRANSPORT_BT
 // - browse/download media
 // - handle live viewing
 class Gear360Service : Service() {
-
     private val binder = LocalBinder()
 
     private val handler = Handler(Looper.getMainLooper())
@@ -82,54 +81,10 @@ class Gear360Service : Service() {
         }
     }
 
-    private val messageListener = object : MessageHandler.MessageListener {
-        override fun onMessageReceive(message: BTMessage) {
-            when (message) {
-                is BTDateTimeReq -> {
-                    messageSender.sendDateTimeResponse()
-                }
-                is BTConfigMsg -> {
-                    gear360Configs.setConfigs(message.configs)
-                }
-                is BTInfoRsp -> {
-                    gear360Info = Gear360Info(
-                        message.modelName,
-                        message.modelVersion,
-                        message.channel,
-                        message.wifiDirectMac,
-                        message.apSSID,
-                        message.apPassword,
-                        message.boardRevision,
-                        message.serialNumber,
-                        message.uniqueNumber,
-                        message.wifiMac,
-                        message.btMac,
-                        message.btFotaTestUrl,
-                        message.fwType
-                    )
-
-                    Log.d(
-                        TAG,
-                        "Version: ${gear360Info?.getSemanticVersion()} -- ${gear360Info?.getVersionName()}"
-                    )
-                }
-                is BTWidgetReq -> {
-                    messageSender.sendWidgetInfoRequest()
-                }
-                is BTWidgetRsp -> {
-                    gear360Status = message.gear360Status
-                }
-            }
-        }
-    }
-
     val messageLog = MessageLog()
     val messageHandler = MessageHandler()
     val messageSender = MessageSender { channelId, data ->
-        btmProviderService?.send(
-            channelId,
-            data
-        )
+        btmProviderService?.send(channelId, data)
         messageLog.messageSent(data.toString(Charsets.UTF_8))
     }
 
@@ -141,7 +96,7 @@ class Gear360Service : Service() {
         Log.d(TAG, "onCreate")
         super.onCreate()
 
-        messageHandler.addMessageListener(messageListener)
+        messageHandler.addMessageListener(this::onMessage)
 
         // SamAccessoryManager needs to be initialised on another thread for whatever reason
         val handlerThread = HandlerThread("$TAG SAThread")
@@ -158,16 +113,11 @@ class Gear360Service : Service() {
         }
     }
 
-    override fun onRebind(intent: Intent?) {
-        Log.d(TAG, "onRebind")
-        super.onRebind(intent)
-    }
-
     override fun onDestroy() {
         Log.d(TAG, "onDestroy")
         super.onDestroy()
 
-        messageHandler.removeMessageListener(messageListener)
+        messageHandler.removeMessageListener(this::onMessage)
 
         disconnect()
         samAccessoryManager?.release()
@@ -212,6 +162,62 @@ class Gear360Service : Service() {
         )
     }
 
+    private fun onMessage(message: BTMessage) {
+        when (message) {
+            is BTDateTimeReq -> {
+                messageSender.sendDateTimeResponse()
+            }
+
+            is BTConfigMsg -> {
+                gear360Configs.setConfigs(message.configs)
+            }
+
+            is BTInfoRsp -> {
+                gear360Info = Gear360Info(
+                    message.modelName,
+                    message.modelVersion,
+                    message.channel,
+                    message.wifiDirectMac,
+                    message.apSSID,
+                    message.apPassword,
+                    message.boardRevision,
+                    message.serialNumber,
+                    message.uniqueNumber,
+                    message.wifiMac,
+                    message.btMac,
+                    message.btFotaTestUrl,
+                    message.fwType
+                )
+
+                Log.d(
+                    TAG,
+                    "Version: ${gear360Info?.getSemanticVersion()} -- ${gear360Info?.getVersionName()}"
+                )
+            }
+
+            is BTWidgetReq -> {
+                messageSender.sendWidgetInfoRequest()
+            }
+
+            is BTWidgetRsp -> {
+                gear360Status = message.gear360Status
+            }
+
+            is BTShotRsp -> {
+                gear360Status?.capturableCount = message.capturableCount
+                gear360Status?.recordableTime = message.recordableTime
+            }
+
+            is BTCommandReq -> {
+                if (message.action is BTCommandReq.ConfigAction) {
+                    Log.d(TAG, "Config set ${message.action.configName} to ${message.action.configValue}")
+                    val config = gear360Configs.getConfig(message.action.configName) ?: return
+                    gear360Configs.setConfig(Gear360Configs.Config(config.name, message.action.configValue, config.values))
+                }
+            }
+        }
+    }
+
     override fun onBind(intent: Intent): IBinder {
         Log.d(TAG, "onBind")
         return binder
@@ -219,6 +225,11 @@ class Gear360Service : Service() {
 
     override fun onUnbind(intent: Intent?): Boolean {
         return super.onUnbind(intent)
+    }
+
+    override fun onRebind(intent: Intent?) {
+        Log.d(TAG, "onRebind")
+        super.onRebind(intent)
     }
 
     inner class LocalBinder : Binder() {

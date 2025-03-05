@@ -1,19 +1,18 @@
 package io.github.teccheck.gear360app.bluetooth
 
 object ConfigConstants {
-    const val MODE = "Mode"
-    const val LOOPING_VIDEO_TIME = "Looping Video Recording Time"
+    const val MODE = "mode"
+    const val LOOPING_VIDEO_TIME = "looping video recording time"
     const val TIMER = "timer"
-    const val BEEP = "Beep"
-    const val AUTO_POWER_OFF = "Auto Power Off"
-    const val LED_INDICATOR = "Led indicator"
+    const val BEEP = "beep"
+    const val AUTO_POWER_OFF = "auto power off"
+    const val LED_INDICATOR = "led indicator"
 
     const val LED_ON = "On"
     const val LED_OFF = "Off"
 }
 
 class Gear360Configs {
-
     private val map = HashMap<String, Config>()
 
     fun setConfigs(configs: List<Config>) {
@@ -26,7 +25,7 @@ class Gear360Configs {
     }
 
     fun getConfig(name: String): Config? {
-        return map[name]
+        return map[name.lowercase()]
     }
 
     fun getCameraMode(): CameraMode? {

@@ -122,7 +122,7 @@ class BTConfigMsg(
 
             for (i in 1..count) {
                 val config: JSONObject = items.getJSONObject(i.toString())
-                val name = config.getString("sub-title")
+                val name = config.getString("sub-title").lowercase()
                 val defaultValue = config.getString("default")
                 val values = config.getString("value").split(",".toRegex()).toTypedArray()
 
@@ -253,7 +253,7 @@ class BTWidgetRsp(
     }
 }
 
-class BTCommandReq(private val action: Action) : BTMessage(
+class BTCommandReq(val action: Action) : BTMessage(
     "Command request Message",
     "Message structure in JSON for Command request",
     MsgConst.OBJECT
@@ -282,8 +282,8 @@ class BTCommandReq(private val action: Action) : BTMessage(
     class ConfigAction(
         enum: String,
         description: String,
-        private val configName: String,
-        private val configValue: String
+        val configName: String,
+        val configValue: String
     ) :
         Action(enum, description) {
 
@@ -305,6 +305,22 @@ class BTCommandReq(private val action: Action) : BTMessage(
 
             jsonObject.put(MsgConst.ITEMS, items)
             return jsonObject
+        }
+    }
+
+    companion object {
+        fun fromJson(jsonObject: JSONObject): BTCommandReq {
+            val title = jsonObject.getString(MsgConst.TITLE)
+            val description = jsonObject.getString(MsgConst.DESCRIPTION)
+            val type = jsonObject.getString(MsgConst.TYPE)
+
+            val action = jsonObject.getJSONObject("properties").getJSONObject("action")
+            val items = action.getJSONObject("items")
+
+            val name = items.keys().next()
+            val value = items.getJSONObject(name).getString("description")
+
+            return BTCommandReq(ConfigAction(action.getString("enum"), action.getString("description"), name, value))
         }
     }
 }

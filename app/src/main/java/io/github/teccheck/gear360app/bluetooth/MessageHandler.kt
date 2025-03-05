@@ -41,6 +41,9 @@ class MessageHandler {
                 MessageIds.COMMAND_RSP -> {
                     handleMessage(BTCommandRsp.fromJson(jsonObject))
                 }
+                MessageIds.COMMAND_REQ -> {
+                    handleMessage(BTCommandReq.fromJson(jsonObject))
+                }
                 MessageIds.DEVICE_DESC_URL -> {
                     handleMessage(BTDeviceDescUrlMsg.fromJson(jsonObject))
                 }
@@ -66,7 +69,7 @@ class MessageHandler {
         listeners.remove(messageListener)
     }
 
-    interface MessageListener {
+    fun interface MessageListener {
         fun onMessageReceive(message: BTMessage)
     }
 }
