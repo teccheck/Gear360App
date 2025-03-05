@@ -1,7 +1,9 @@
 package io.github.teccheck.gear360app.activity
 
 import android.os.Bundle
+import com.google.android.exoplayer2.DefaultLoadControl
 import com.google.android.exoplayer2.ExoPlayer
+import com.google.android.exoplayer2.LoadControl
 import com.google.android.exoplayer2.MediaItem
 import com.google.android.exoplayer2.source.DefaultMediaSourceFactory
 import com.google.android.exoplayer2.ui.StyledPlayerView
@@ -26,8 +28,13 @@ class ExoplayerActivity : BaseActivity() {
 
         val mediaSourceFactory = DefaultMediaSourceFactory(this, Extractor.Factory())
 
+        val loadControl = DefaultLoadControl.Builder()
+            .setBufferDurationsMs(200, 400, 0, 0)
+            .build()
+
         player = ExoPlayer.Builder(this)
             .setMediaSourceFactory(mediaSourceFactory)
+            .setLoadControl(loadControl)
             .build()
 
         playerView.player = player
