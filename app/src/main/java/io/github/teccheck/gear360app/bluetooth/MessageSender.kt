@@ -69,8 +69,7 @@ class MessageSender(private val sender: Sender) {
         sender.send(204, message.toJson().toString().encodeToByteArray())
     }
 
-    interface Sender {
+    fun interface Sender {
         fun send(channelId: Int, data: ByteArray)
     }
-
 }

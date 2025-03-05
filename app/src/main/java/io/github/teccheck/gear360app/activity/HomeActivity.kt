@@ -82,7 +82,11 @@ class HomeActivity : BaseActivity() {
             startActivity(Intent(this, HardwareInfoActivity::class.java))
         }
 
-        findViewById<Button>(R.id.btn_test).setOnClickListener {
+        findViewById<LinearLayout>(R.id.layout_messages).setOnClickListener {
+            startActivity(Intent(this, MessagesActivity::class.java))
+        }
+
+        findViewById<LinearLayout>(R.id.layout_test).setOnClickListener {
             startActivity(Intent(this, TestActivity::class.java))
         }
     }

@@ -12,6 +12,14 @@ import io.github.teccheck.gear360app.utils.WifiUtils
 private const val TAG = "Gear360Service"
 private const val SA_TRANSPORT_TYPE = SamAccessoryManager.TRANSPORT_BT
 
+// Tasks this should do
+// - receive commands to connect/disconnect/pair a camera
+// - report connections status
+// - get static camera info on connect
+// - periodically get camera status
+// Optional things this should do
+// - browse/download media
+// - handle live viewing
 class Gear360Service : Service() {
 
     private val binder = LocalBinder()
@@ -63,6 +71,7 @@ class Gear360Service : Service() {
 
         override fun onReceive(channelId: Int, data: ByteArray?) {
             Log.d(TAG, "onReceive $channelId, $data")
+            data?.let { messageLog.messageReceived(it.toString(Charsets.UTF_8)) }
             messageHandler.onReceive(channelId, data)
         }
 
@@ -114,12 +123,15 @@ class Gear360Service : Service() {
         }
     }
 
+    val messageLog = MessageLog()
     val messageHandler = MessageHandler()
-    val messageSender = MessageSender(object : MessageSender.Sender {
-        override fun send(channelId: Int, data: ByteArray) {
-            btmProviderService?.send(channelId, data)
-        }
-    })
+    val messageSender = MessageSender { channelId, data ->
+        btmProviderService?.send(
+            channelId,
+            data
+        )
+        messageLog.messageSent(data.toString(Charsets.UTF_8))
+    }
 
     val gear360Configs = Gear360Configs()
     var gear360Info: Gear360Info? = null

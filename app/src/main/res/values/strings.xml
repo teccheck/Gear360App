@@ -9,6 +9,10 @@
     <string name="btn_remote_control_description">Control your Gear 360 from a distance</string>
     <string name="btn_hardware">Hardware info</string>
     <string name="btn_hardware_description">View hardware information of your Gear 360</string>
+    <string name="btn_messages">Messages</string>
+    <string name="btn_messages_description">View Bluetooth messages between your phone and the camera</string>
+    <string name="btn_test">Test</string>
+    <string name="btn_test_description">Testing area. Please mind the gap</string>
 
     <!-- RemoteControlActivity -->
     <string name="mode">Mode</string>
@@ -66,4 +70,7 @@
     <string name="hardware_fw_type_user">User</string>
     <string name="hardware_fw_type_retail">Retail</string>
 
+    <!-- Messages Activity -->
+    <string name="sender_phone">Phone</string>
+    <string name="sender_camera">Camera</string>
 </resources>

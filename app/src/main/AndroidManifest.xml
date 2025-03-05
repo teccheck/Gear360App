@@ -59,6 +59,9 @@
             android:name=".activity.HardwareInfoActivity"
             android:exported="false" />
         <activity
+            android:name=".activity.MessagesActivity"
+            android:exported="false" />
+        <activity
             android:name=".activity.HomeActivity"
             android:exported="false" />
         <activity
