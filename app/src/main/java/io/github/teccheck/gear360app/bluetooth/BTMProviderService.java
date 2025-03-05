@@ -38,7 +38,6 @@ public class BTMProviderService extends SAAgentV2 {
     }
 
     public void send(int channel, byte[] data) {
-        Log.d(TAG, "SendData: " + new String(data));
         if (providerConnection != null) {
             try {
                 providerConnection.send(channel, data);
@@ -111,7 +110,6 @@ public class BTMProviderService extends SAAgentV2 {
 
         @Override
         public void onReceive(int channelId, byte[] data) {
-            Log.d(TAG, "onReceive (" + channelId + "):\n" + new String(data));
             if (callback != null)
                 callback.onReceive(channelId, data);
         }
