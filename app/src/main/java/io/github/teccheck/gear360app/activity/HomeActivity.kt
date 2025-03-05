@@ -78,6 +78,10 @@ class HomeActivity : BaseActivity() {
             startActivity(Intent(this, RemoteControlActivity::class.java))
         }
 
+        findViewById<LinearLayout>(R.id.layout_status).setOnClickListener {
+            startActivity(Intent(this, StatusActivity::class.java))
+        }
+
         findViewById<LinearLayout>(R.id.layout_hardware).setOnClickListener {
             startActivity(Intent(this, HardwareInfoActivity::class.java))
         }

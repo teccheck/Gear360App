@@ -7,6 +7,8 @@
     <string name="btn_camera_description">Take 360° pictures and videos.</string>
     <string name="btn_remote_control">Remote control</string>
     <string name="btn_remote_control_description">Control your Gear 360 from a distance</string>
+    <string name="btn_status">Camera Status</string>
+    <string name="btn_status_description">View the status of your Gear360</string>
     <string name="btn_hardware">Hardware info</string>
     <string name="btn_hardware_description">View hardware information of your Gear 360</string>
     <string name="btn_messages">Messages</string>
@@ -69,6 +71,18 @@
     <string name="hardware_fw_type">Firmware type</string>
     <string name="hardware_fw_type_user">User</string>
     <string name="hardware_fw_type_retail">Retail</string>
+
+    <!-- StatusActivity -->
+    <string name="status_battery">Battery</string>
+    <string name="status_battery_state">Battery State</string>
+    <string name="status_total_memory">Total Memory</string>
+    <string name="status_used_memory">Used Memory</string>
+    <string name="status_free_memory">Free Memory</string>
+    <string name="status_record_state">Record State</string>
+    <string name="status_capture_state">Capture State</string>
+    <string name="status_auto_poweroff">Auto Poweroff</string>
+    <string name="status_recordable_time">Recordable Time</string>
+    <string name="status_capturable_count">Capturable Count</string>
 
     <!-- Messages Activity -->
     <string name="sender_phone">Phone</string>
