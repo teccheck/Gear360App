@@ -1,62 +1,65 @@
 package io.github.teccheck.gear360app.bluetooth
 
 import android.util.Log
-import org.json.JSONException
-import org.json.JSONObject
+import com.squareup.moshi.JsonAdapter
+import com.squareup.moshi.Moshi
 
 private const val TAG = "MessageHandler"
 
 class MessageHandler {
 
     private val listeners = mutableListOf<MessageListener>()
+    private val moshi = Moshi.Builder().build()
+    private val adapter: JsonAdapter<BTMessageContainer> = moshi.adapter(BTMessageContainer::class.java)
 
     fun onReceive(channelId: Int, data: ByteArray?) {
         if (data == null || channelId != 204)
             return
 
         try {
-            val jsonObject = JSONObject(String(data))
-            val msgId =
-                jsonObject.getJSONObject(MsgConst.PROPERTIES).getString(MsgConst.MSGID)
+            val message: BTMessageContainer? = adapter.fromJson(String(data))
+            val msgId = message?.properties?.msgId ?: return
 
             when (msgId) {
-                MessageIds.DATE_TIME_REQ -> {
-                    handleMessage(BTDateTimeReq.fromJson(jsonObject))
+                MsgId.DATE_TIME_REQ -> {
+                    handleMessage(BTDateTimeRequest())
                 }
-                MessageIds.CONFIG_INFO -> {
-                    handleMessage(BTConfigMsg.fromJson(jsonObject))
+                MsgId.CONFIG_INFO -> {
+                    handleMessage(BTCameraConfigMessage.fromBTMessageContainer(message))
                 }
-                MessageIds.DEVICE_INFO -> {
-                    handleMessage(BTInfoRsp.fromJson(jsonObject))
+                MsgId.DEVICE_INFO -> {
+                    handleMessage(BTCameraInfoMessage.fromBTMessageContainer(message))
                 }
-                MessageIds.WIDGET_INFO_REQ -> {
-                    handleMessage(BTWidgetReq.fromJson(jsonObject))
+                MsgId.WIDGET_INFO_REQ -> {
+                    handleMessage(BTWidgetInfoRequest())
                 }
-                MessageIds.WIDGET_INFO_RSP -> {
-                    handleMessage(BTWidgetRsp.fromJson(jsonObject))
+                MsgId.WIDGET_INFO_RSP -> {
+                    handleMessage(BTWidgetInfoResponse.fromBTMessageContainer(message))
                 }
-                MessageIds.SHOT_RSP -> {
-                    handleMessage(BTShotRsp.fromJson(jsonObject))
+                MsgId.SHOT_RSP -> {
+                    handleMessage(BTRemoteShotResponse.fromBTMessageContainer(message))
                 }
-                MessageIds.COMMAND_RSP -> {
-                    handleMessage(BTCommandRsp.fromJson(jsonObject))
+                MsgId.COMMAND_RSP -> {
+                    handleMessage(BTCommandResponse.fromBTMessageContainer(message))
                 }
-                MessageIds.COMMAND_REQ -> {
-                    handleMessage(BTCommandReq.fromJson(jsonObject))
+                MsgId.COMMAND_REQ -> {
+                    handleMessage(BTCommandRequest.fromBTMessageContainer(message))
                 }
-                MessageIds.DEVICE_DESC_URL -> {
-                    handleMessage(BTDeviceDescUrlMsg.fromJson(jsonObject))
+                MsgId.DEVICE_DESC_URL -> {
+                    handleMessage(BTDeviceDescriptionUrlMessage.fromBTMessageContainer(message))
                 }
                 else -> {
                     Log.w(TAG, "Couldn't handle message with id $msgId")
                 }
             }
-        } catch (e: JSONException) {
+        } catch (e: Exception) {
             Log.e(TAG, e.message, e)
         }
     }
 
-    private fun handleMessage(message: BTMessage) {
+    private fun handleMessage(message: BTMessage2?) {
+        if (message == null) return
+
         for (listener in listeners)
             listener.onMessageReceive(message)
     }
@@ -70,6 +73,6 @@ class MessageHandler {
     }
 
     fun interface MessageListener {
-        fun onMessageReceive(message: BTMessage)
+        fun onMessageReceive(message: BTMessage2)
     }
 }

@@ -9,9 +9,9 @@ import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
 import io.github.teccheck.gear360app.R
-import io.github.teccheck.gear360app.bluetooth.BTCommandRsp
-import io.github.teccheck.gear360app.bluetooth.BTDeviceDescUrlMsg
-import io.github.teccheck.gear360app.bluetooth.BTMessage
+import io.github.teccheck.gear360app.bluetooth.BTCommandResponse
+import io.github.teccheck.gear360app.bluetooth.BTDeviceDescriptionUrlMessage
+import io.github.teccheck.gear360app.bluetooth.BTMessage2
 import io.github.teccheck.gear360app.bluetooth.MessageHandler
 import io.github.teccheck.gear360app.utils.ConnectionState
 import io.github.teccheck.gear360app.utils.SettingsHelper
@@ -31,14 +31,14 @@ class HomeActivity : BaseActivity() {
     private lateinit var connectButton: Button
 
     private val messageListener = object : MessageHandler.MessageListener {
-        override fun onMessageReceive(message: BTMessage) {
-            if (message is BTCommandRsp) {
-                if (message.isSuccess("liveview")) {
+        override fun onMessageReceive(message: BTMessage2) {
+            if (message is BTCommandResponse) {
+                if (message.isSuccess() && message.resultDescription == "liveview") {
                     val ssid = gear360Service?.gear360Info?.apSSID ?: return
                     val password = gear360Service?.gear360Info?.apPassword ?: return
                     WifiUtils.connectToWifi(this@HomeActivity, ssid, password, true)
                 }
-            } else if (message is BTDeviceDescUrlMsg) {
+            } else if (message is BTDeviceDescriptionUrlMessage) {
                 startActivity(Intent(this@HomeActivity, ExoplayerActivity::class.java))
             }
         }

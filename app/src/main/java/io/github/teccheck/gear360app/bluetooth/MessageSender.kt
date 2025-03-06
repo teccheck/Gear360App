@@ -1,20 +1,27 @@
 package io.github.teccheck.gear360app.bluetooth
 
+import com.squareup.moshi.JsonAdapter
+import com.squareup.moshi.Moshi
+import java.util.Date
+
 private const val TAG = "MessageSender"
 
 class MessageSender(private val sender: Sender) {
 
+    private val moshi = Moshi.Builder().build()
+    private val adapter: JsonAdapter<BTMessageContainer> =
+        moshi.adapter(BTMessageContainer::class.java)
+
     fun sendPhoneInfo(wifiMac: String) {
-        val versionName = "1.2.00.8"
-        sendCommand2(BTInfoMsg(false, wifiMac, "test", versionName, false))
+        sendMessage(BTPhoneInfoMessage(false, wifiMac, "test", "1.2.00.8", false).asBtMessageContainer())
     }
 
     fun sendWidgetInfoRequest() {
-        sendCommand2(BTWidgetReq())
+        sendMessage(BTWidgetInfoRequest().asBtMessageContainer())
     }
 
     fun sendDateTimeResponse() {
-        sendCommand2(BTDateTimeRsp())
+        sendMessage(BTDateTimeResponse(Date(System.currentTimeMillis())).asBtMessageContainer())
     }
 
     fun sendChangeMode(mode: CameraMode) {
@@ -43,9 +50,7 @@ class MessageSender(private val sender: Sender) {
     }
 
     private fun sendConfigChangeCommand(configName: String, configValue: String) {
-        val action = BTCommandReq.ConfigAction(configName, configValue)
-        val message = BTCommandReq(action)
-        sendCommand2(message)
+        sendMessage(BTCommandRequest(BTCommandActionConfig(configName, configValue)).asBtMessageContainer())
     }
 
     fun sendShotRequest(isPhotoMode: Boolean, isRecording: Boolean) {
@@ -56,17 +61,15 @@ class MessageSender(private val sender: Sender) {
         else
             "record stop"
 
-        sendCommand2(BTShotReq(mode))
+        sendMessage(BTRemoteShotRequest(mode).asBtMessageContainer())
     }
 
     fun sendLiveViewRequest() {
-        val action = BTCommandReq.Action("execute", "liveview")
-        val message = BTCommandReq(action)
-        sendCommand2(message)
+        sendMessage(BTCommandRequest(BTCommandActionLiveView()).asBtMessageContainer())
     }
 
-    private fun sendCommand2(message: BTMessage) {
-        sender.send(204, message.toJson().toString().encodeToByteArray())
+    private fun sendMessage(message: BTMessageContainer) {
+        sender.send(204, adapter.toJson(message).encodeToByteArray())
     }
 
     fun interface Sender {

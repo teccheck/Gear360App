@@ -1,5 +1,8 @@
-apply plugin: 'com.android.application'
-apply plugin: 'kotlin-android'
+plugins {
+    id 'com.android.application'
+    id 'kotlin-android'
+    id 'com.google.devtools.ksp' version '2.1.0-1.0.29'
+}
 
 android {
     compileSdk 35
@@ -34,6 +37,9 @@ dependencies {
     implementation 'com.google.code.gson:gson:2.10.1'
     implementation 'com.google.android.exoplayer:exoplayer-core:2.19.1'
     implementation 'com.google.android.exoplayer:exoplayer-ui:2.19.1'
+
+    implementation 'com.squareup.moshi:moshi-kotlin:1.15.2'
+    ksp 'com.squareup.moshi:moshi-kotlin-codegen:1.15.2'
 
     implementation files('sdk/sdk-v1.0.0.jar')
     implementation files('sdk/accessory-v2.6.1.jar')

@@ -1,241 +1,317 @@
 package io.github.teccheck.gear360app.bluetooth
 
-import android.annotation.SuppressLint
-import org.json.JSONObject
+import com.squareup.moshi.Json
+import com.squareup.moshi.JsonClass
 import java.text.SimpleDateFormat
 import java.util.*
 
-object MsgConst {
-    const val TITLE = "title"
-    const val DESCRIPTION = "description"
-    const val TYPE = "type"
-    const val MSGID = "msgId"
+// Because the messages used in bluetooth communication have a very weird format and don't follow
+// any good logic, this is quite messy and complicated. I tried my best to make the code
+// understandable. There's two parts to this. One is the structure of the json used to feed moshi.
+// The other one is the messages in a more user friendly way to be used by this codebase.
+// MessageHandler and MessageSender are used to convert between the formats so you don't have to
+// worry about it.
 
-    const val PROPERTIES = "properties"
-    const val ITEMS = "items"
-    const val ENUM = "enum"
+// The following classes are used to serialize and deserialize the messages
 
-    const val OBJECT = "object"
-    const val STRING = "string"
+enum class MsgId {
+    @Json(name = "info")
+    DEVICE_INFO,
+
+    @Json(name = "config-info")
+    CONFIG_INFO,
+
+    @Json(name = "widget-info-req")
+    WIDGET_INFO_REQ,
+
+    @Json(name = "widget-info-rsp")
+    WIDGET_INFO_RSP,
+
+    @Json(name = "widget-info-update")
+    WIDGET_INFO_UPDATE,
+
+    @Json(name = "date-time-req")
+    DATE_TIME_REQ,
+
+    @Json(name = "date-time-rsp")
+    DATE_TIME_RSP,
+
+    @Json(name = "cmd-req")
+    COMMAND_REQ,
+
+    @Json(name = "cmd-rsp")
+    COMMAND_RSP,
+
+    @Json(name = "shot-req")
+    SHOT_REQ,
+
+    @Json(name = "shot-rst")
+    SHOT_RSP,
+
+    @Json(name = "device-desc-url")
+    DEVICE_DESC_URL,
+
+    @Json(name = "bigdata-req")
+    BIGDATA_REQ,
 }
 
-object MessageIds {
-    const val DEVICE_INFO = "info"
-    const val CONFIG_INFO = "config-info"
-    const val WIDGET_INFO_REQ = "widget-info-req"
-    const val WIDGET_INFO_RSP = "widget-info-rsp"
-    const val DATE_TIME_REQ = "date-time-req"
-    const val DATE_TIME_RSP = "date-time-rsp"
-    const val COMMAND_REQ = "cmd-req"
-    const val COMMAND_RSP = "cmd-rsp"
-    const val SHOT_REQ = "shot-req"
-    const val SHOT_RSP = "shot-rst"
-    const val DEVICE_DESC_URL = "device-desc-url"
-    const val BIGDATA_REQ = "bigdata-req"
-}
+@JsonClass(generateAdapter = true)
+class BTMessageContainer(
+    // Who decided this was necessary?
+    // JSON is not supposed to be human readable (especially not in this case)!
+    val title: String = "",
+    val description: String = "",
+    val type: String = "object",
 
-abstract class BTMessage(
-    private val title: String,
-    private val description: String,
-    private val type: String
-) {
-    open fun toJson(): JSONObject {
-        val jsonObject = JSONObject()
-        jsonObject.put(MsgConst.TITLE, title)
-        jsonObject.put(MsgConst.DESCRIPTION, description)
-        jsonObject.put(MsgConst.TYPE, type)
-        return jsonObject
-    }
+    // This is the only really useful object here
+    val properties: BTMessageProperties,
+)
 
-    companion object {
-        fun getJsonProperty(value: String): JSONObject {
-            return JSONObject()
-                .put(MsgConst.TYPE, MsgConst.STRING)
-                .put(MsgConst.DESCRIPTION, value)
-        }
+@JsonClass(generateAdapter = true)
+class BTMessageProperties(
+    val msgId: MsgId,
 
-        fun getJsonProperty(value: Any, type: String): JSONObject {
-            return JSONObject()
-                .put(MsgConst.TYPE, type)
-                .put(MsgConst.DESCRIPTION, value)
-        }
-    }
-}
+    // Command Request
+    val action: BTMessageAction? = null,
 
-class BTInfoMsg(
-    private val wifiDirect: Boolean,
-    private val wifiMacAddress: String,
-    private val deviceName: String,
-    private val appVersion: String,
-    private val retailMode: Boolean
-) : BTMessage(
-    "Phone Device information Message",
-    "Message structure in JSON for Phone Device information",
-    MsgConst.OBJECT
-) {
-    override fun toJson(): JSONObject {
-        val jsonObject = super.toJson()
+    // Widget Info Response
+    val list: BTMessageList? = null,
 
-        val properties = JSONObject()
-        properties.put(MsgConst.MSGID, MessageIds.DEVICE_INFO)
-        properties.put(
-            "wifi-direct",
-            JSONObject()
-                .put(MsgConst.ENUM, wifiDirect.toString())
-                .put(
-                    "ch-negotiation-wa",
-                    JSONObject().put(MsgConst.DESCRIPTION, "5G-GO")
-                )
-        )
-        properties.put("wifi-mac-address", getJsonProperty(wifiMacAddress))
-        properties.put("device-name", getJsonProperty(deviceName))
-        properties.put("app-version", getJsonProperty(appVersion))
+    // Camera Config
+    val functions: BTMessageFunctions? = null,
 
-        val opMode = if (retailMode) "retail" else "user"
-        properties.put("op-mode", getJsonProperty(opMode))
+    // Multiple things
+    val result: BTMessageResult? = null,
 
-        jsonObject.put(MsgConst.PROPERTIES, properties)
-        return jsonObject
-    }
-}
+    // Remote Shot Request
+    val items: BTMessageProperty<String>? = null,
 
-class BTConfigMsg(
-    title: String,
-    description: String,
-    type: String,
-    val configs: List<Gear360Configs.Config>
-) : BTMessage(title, description, type) {
+    // Datetime Response
+    val date: BTMessageProperty<String>? = null,
+    val time: BTMessageProperty<String>? = null,
+    val region: BTMessageProperty<String>? = null,
+    val summer: BTMessageProperty<String>? = null,
 
-    companion object {
-        fun fromJson(jsonObject: JSONObject): BTConfigMsg {
-            val title = jsonObject.getString(MsgConst.TITLE)
-            val description = jsonObject.getString(MsgConst.DESCRIPTION)
-            val type = jsonObject.getString(MsgConst.TYPE)
+    // Phone device info
+    @Json(name = "wifi-direct") val wifiDirect: BTMessageWifiDirect? = null,
+    @Json(name = "wifi-mac-address") val wifiMacAddress: BTMessageProperty<String>? = null,
+    @Json(name = "device-name") val deviceName: BTMessageProperty<String>? = null,
+    @Json(name = "app-version") val appVersion: BTMessageProperty<String>? = null,
+    @Json(name = "op-mode") val opMode: BTMessageProperty<String>? = null,
 
-            val properties = jsonObject.getJSONObject(MsgConst.PROPERTIES)
+    // Camera device info
+    @Json(name = "model-name") val modelName: BTMessageProperty<String>? = null,
+    @Json(name = "model-version") val modelVersion: BTMessageProperty<String>? = null,
+    val channel: BTMessageProperty<Int>? = null,
+    @Json(name = "wifi-direct-mac") val wifiDirectMac: BTMessageProperty<String>? = null,
+    @Json(name = "softap-ssid") val softApSsid: BTMessageProperty<String>? = null,
+    @Json(name = "softap-psword") val softApPassword: BTMessageProperty<String>? = null,
+    @Json(name = "board-revision") val boardRevision: BTMessageProperty<String>? = null,
+    @Json(name = "serial-number") val serialNumber: BTMessageProperty<String>? = null,
+    @Json(name = "unique-number") val uniqueNumber: BTMessageProperty<String>? = null,
+    @Json(name = "wifi-mac") val wifiMac: BTMessageProperty<String>? = null,
+    @Json(name = "bt-mac") val btMac: BTMessageProperty<String>? = null,
+    @Json(name = "bt-fota-test-url") val btFotaTestUrl: BTMessageProperty<String>? = null,
+    @Json(name = "fw-type") val firmwareType: BTMessageProperty<Int>? = null,
 
-            val functions = properties.getJSONObject("functions")
-            val count: Int = functions.getInt("count")
-            val items: JSONObject = functions.getJSONObject(MsgConst.ITEMS)
+    // Remote Shot Result
+    @Json(name = "r-code") val resultCode: BTMessageProperty<Int>? = null,
+    @Json(name = "extension-info") val extensionInfo: BTMessageExtensionInfo? = null,
 
-            val configs = mutableListOf<Gear360Configs.Config>()
+    // Device description
+    val url: BTMessageProperty<String>? = null
+)
 
-            for (i in 1..count) {
-                val config: JSONObject = items.getJSONObject(i.toString())
-                val name = config.getString("sub-title").lowercase()
-                val defaultValue = config.getString("default")
-                val values = config.getString("value").split(",".toRegex()).toTypedArray()
+@JsonClass(generateAdapter = true)
+class BTMessageWifiDirect(
+    val enum: String,
+    @Json(name = "ch-negotiation-wa") val negotiation: BTMessageWifiDirectNegotiation,
+)
 
-                configs.add(Gear360Configs.Config(name, defaultValue, values))
-            }
+@JsonClass(generateAdapter = true)
+class BTMessageWifiDirectNegotiation(
+    val description: String
+)
 
-            return BTConfigMsg(title, description, type, configs)
-        }
-    }
-}
+@JsonClass(generateAdapter = true)
+class BTMessageExtensionInfo(
+    @Json(name = "recordable-time") val recordableTime: BTMessageProperty<Int>?,
+    @Json(name = "capturable-count") val capturableCount: BTMessageProperty<Int>?,
+)
 
-class BTInfoRsp(
-    title: String,
-    description: String,
-    type: String,
-    val modelName: String,
-    val modelVersion: String,
-    val channel: Int,
-    val wifiDirectMac: String,
-    val apSSID: String,
-    val apPassword: String,
-    val boardRevision: String,
-    val serialNumber: String,
-    val uniqueNumber: String,
-    val wifiMac: String,
-    val btMac: String,
-    val btFotaTestUrl: String,
-    val fwType: Int
-) : BTMessage(title, description, type) {
-    companion object {
-        fun fromJson(jsonObject: JSONObject): BTInfoRsp {
-            val title = jsonObject.getString(MsgConst.TITLE)
-            val description = jsonObject.getString(MsgConst.DESCRIPTION)
-            val type = jsonObject.getString(MsgConst.TYPE)
+@JsonClass(generateAdapter = true)
+class BTMessageResult(
+    val enum: String,
+    val description: String,
+)
 
-            val properties = jsonObject.getJSONObject(MsgConst.PROPERTIES)
+@JsonClass(generateAdapter = true)
+class BTMessageProperty<T>(
+    val type: String,
+    val description: T,
+)
 
-            return BTInfoRsp(
-                title,
-                description,
-                type,
-                properties.getJSONObject("model-name").getString(MsgConst.DESCRIPTION),
-                properties.getJSONObject("model-version").getString(MsgConst.DESCRIPTION),
-                properties.getJSONObject("channel").getInt(MsgConst.DESCRIPTION),
-                properties.getJSONObject("wifi-direct-mac").getString(MsgConst.DESCRIPTION),
-                properties.getJSONObject("softap-ssid").getString(MsgConst.DESCRIPTION),
-                properties.getJSONObject("softap-psword").getString(MsgConst.DESCRIPTION),
-                properties.getJSONObject("board-revision").getString(MsgConst.DESCRIPTION),
-                properties.getJSONObject("serial-number").getString(MsgConst.DESCRIPTION),
-                properties.getJSONObject("unique-number").getString(MsgConst.DESCRIPTION),
-                properties.getJSONObject("wifi-mac").getString(MsgConst.DESCRIPTION),
-                properties.getJSONObject("bt-mac").getString(MsgConst.DESCRIPTION),
-                properties.getJSONObject("bt-fota-test-url").getString(MsgConst.DESCRIPTION),
-                properties.getJSONObject("fw-type").getInt(MsgConst.DESCRIPTION),
+@JsonClass(generateAdapter = true)
+class BTMessageList(
+    val type: String,
+    val items: BTMessageListItems,
+)
+
+@JsonClass(generateAdapter = true)
+class BTMessageListItems(
+    val result: BTMessageResult?,
+    val battery: BTMessageProperty<Int>?,
+    @Json(name = "battery-state") val batteryState: BTMessageProperty<String>?,
+    @Json(name = "total-memory") val totalMemory: BTMessageProperty<Int>?,
+    @Json(name = "used-memory") val usedMemory: BTMessageProperty<Int>?,
+    @Json(name = "free-memory") val freeMemory: BTMessageProperty<Int>?,
+    @Json(name = "record-state") val recordState: BTMessageProperty<String>?,
+    @Json(name = "capture-state") val captureState: BTMessageProperty<String>?,
+    @Json(name = "auto-poweroff") val autoPowerOff: BTMessageProperty<String>?,
+    @Json(name = "recordable-time") val recordableTime: BTMessageProperty<Int>?,
+    @Json(name = "capturable-count") val capturableCount: BTMessageProperty<Int>?,
+)
+
+@JsonClass(generateAdapter = true)
+class BTMessageFunctions(
+    val type: String,
+    val count: Int,
+    val items: BTMessageFunctionsItems,
+)
+
+@JsonClass(generateAdapter = true)
+class BTMessageFunctionsItems(
+    @Json(name = "1") val beep: BTMessageFunctionsItem,
+    @Json(name = "2") val led: BTMessageFunctionsItem,
+    @Json(name = "3") val autoPowerOff: BTMessageFunctionsItem,
+    @Json(name = "4") val videoOut: BTMessageFunctionsItem,
+    @Json(name = "5") val format: BTMessageFunctionsItem,
+    @Json(name = "6") val reset: BTMessageFunctionsItem,
+    @Json(name = "7") val mode: BTMessageFunctionsItem,
+    @Json(name = "8") val timer: BTMessageFunctionsItem,
+    @Json(name = "9") val loopingRecordTime: BTMessageFunctionsItem,
+)
+
+@JsonClass(generateAdapter = true)
+class BTMessageFunctionsItem(
+    @Json(name = "sub-title") val subTitle: String,
+    val count: Int,
+    val value: String,
+    val default: String,
+)
+
+@JsonClass(generateAdapter = true)
+class BTMessageAction(
+    val enum: String,
+    val description: String,
+    val items: BTMessageConfigActionItems? = null,
+)
+
+@JsonClass(generateAdapter = true)
+class BTMessageConfigActionItems(
+    val mode: BTMessageConfigActionItem?,
+    val timer: BTMessageConfigActionItem?,
+)
+
+@JsonClass(generateAdapter = true)
+class BTMessageConfigActionItem(val description: String)
+
+// The following classes are used to actually handle the messages in code
+
+/**
+ * Base class for all bluetooth messages.
+ */
+open class BTMessage2
+
+/**
+ * This request comes from the camera to request current date and time information
+ * The camera expects a BTDateTimeResponse in return.
+ * @see BTDateTimeResponse
+ */
+class BTDateTimeRequest() : BTMessage2()
+
+/**
+ * This response comes from the phone with current date and time
+ * information to sync the clock of the camera.
+ * @see BTDateTimeRequest
+ * @param date the current date
+ */
+class BTDateTimeResponse(private val date: Date) : BTMessage2() {
+    fun asBtMessageContainer(): BTMessageContainer {
+        val dateFormat = SimpleDateFormat("yyy/MM/dd")
+        val timeFormat = SimpleDateFormat("HH:mm:ss")
+        val zoneFormat = SimpleDateFormat("Z")
+
+        val zone = zoneFormat.format(date)
+        val region = zone.substring(0, 3) + ":" + zone.substring(3, 5)
+
+        val isSummerTime = TimeZone.getDefault().useDaylightTime()
+
+        return BTMessageContainer(
+            properties = BTMessageProperties(
+                msgId = MsgId.DATE_TIME_RSP,
+                date = BTMessageProperty("string", dateFormat.format(date)),
+                time = BTMessageProperty("string", timeFormat.format(date)),
+                region = BTMessageProperty("string", region),
+                summer = BTMessageProperty("string", isSummerTime.toString()),
             )
-        }
+        )
     }
 }
 
-class BTWidgetReq : BTMessage(
-    "Widget info request Message",
-    "Message structure in JSON for Widget Info request",
-    MsgConst.OBJECT
-) {
-    override fun toJson(): JSONObject {
-        val jsonObject = super.toJson()
-
-        val properties = JSONObject().put(MsgConst.MSGID, MessageIds.WIDGET_INFO_REQ)
-        jsonObject.put(MsgConst.PROPERTIES, properties)
-
-        return jsonObject
-    }
-
-    companion object {
-        fun fromJson(jsonObject: JSONObject): BTWidgetReq {
-            return BTWidgetReq()
-        }
+/**
+ * Sent by both camera and phone. The camera sends this first and the phone responds with the same
+ * message. Then the camera sends BTWidgetInfoResponse.
+ * @see BTWidgetInfoResponse
+ */
+class BTWidgetInfoRequest() : BTMessage2() {
+    fun asBtMessageContainer(): BTMessageContainer {
+        return BTMessageContainer(properties = BTMessageProperties(MsgId.WIDGET_INFO_REQ))
     }
 }
 
-class BTWidgetRsp(
-    title: String,
-    description: String,
-    type: String,
-    val gear360Status: Gear360Status
-) : BTMessage(title, description, type) {
-
+/**
+ * Sent by the camera. Contains current status information.
+ * @param battery current battery level (0-3)
+ * @param batteryState current battery state (normal, charging, ...)
+ * @param totalMemory the total memory available to the camera
+ * @param usedMemory the used memory
+ * @param freeMemory the free memory
+ * @param recordState whether the camera is recording or not
+ * @param captureState whether the camera is capturing or not
+ * @param autoPowerOff how long before the camera shuts of automatically
+ * @param recordableTime how much can be recorded to the sdcard
+ * @param capturableCount how many images can be captured on to the sdcard
+ */
+class BTWidgetInfoResponse(
+    val battery: Int,
+    val batteryState: String,
+    val totalMemory: Int,
+    val usedMemory: Int,
+    val freeMemory: Int,
+    val recordState: String,
+    val captureState: String,
+    val autoPowerOff: String,
+    val recordableTime: Int,
+    val capturableCount: Int,
+) : BTMessage2() {
     companion object {
-        fun fromJson(jsonObject: JSONObject): BTWidgetRsp {
-            val title = jsonObject.getString(MsgConst.TITLE)
-            val description = jsonObject.getString(MsgConst.DESCRIPTION)
-            val type = jsonObject.getString(MsgConst.TYPE)
+        fun fromBTMessageContainer(msg: BTMessageContainer): BTWidgetInfoResponse? {
+            if (msg.properties.msgId != MsgId.WIDGET_INFO_RSP) return null
+            val list = msg.properties.list ?: return null
 
-            val properties = jsonObject.getJSONObject(MsgConst.PROPERTIES)
-            val items = properties.getJSONObject("list").getJSONObject("items")
+            val battery = list.items.battery?.description ?: return null
+            val batteryState = list.items.batteryState?.description ?: return null
+            val totalMemory = list.items.totalMemory?.description ?: return null
+            val usedMemory = list.items.usedMemory?.description ?: return null
+            val freeMemory = list.items.freeMemory?.description ?: return null
+            val recordState = list.items.recordState?.description ?: return null
+            val captureState = list.items.captureState?.description ?: return null
+            val autoPowerOff = list.items.autoPowerOff?.description ?: return null
+            val recordableTime = list.items.recordableTime?.description ?: return null
+            val capturableCount = list.items.capturableCount?.description ?: return null
 
-            val battery = items.getJSONObject("battery").getInt(MsgConst.DESCRIPTION)
-            val batteryState =
-                items.getJSONObject("battery-state").getString(MsgConst.DESCRIPTION)
-            val totalMemory = items.getJSONObject("total-memory").getInt(MsgConst.DESCRIPTION)
-            val usedMemory = items.getJSONObject("used-memory").getInt(MsgConst.DESCRIPTION)
-            val freeMemory = items.getJSONObject("free-memory").getInt(MsgConst.DESCRIPTION)
-            val recordState = items.getJSONObject("record-state").getString(MsgConst.DESCRIPTION)
-            val captureState =
-                items.getJSONObject("capture-state").getString(MsgConst.DESCRIPTION)
-            val autoPowerOff =
-                items.getJSONObject("auto-poweroff").getString(MsgConst.DESCRIPTION)
-            val recordableTime =
-                items.getJSONObject("recordable-time").getInt(MsgConst.DESCRIPTION)
-            val capturableCount =
-                items.getJSONObject("capturable-count").getInt(MsgConst.DESCRIPTION)
-
-            val status = Gear360Status(
+            return BTWidgetInfoResponse(
                 battery,
                 batteryState,
                 totalMemory,
@@ -247,217 +323,248 @@ class BTWidgetRsp(
                 recordableTime,
                 capturableCount
             )
-
-            return BTWidgetRsp(title, description, type, status)
         }
     }
 }
 
-class BTCommandReq(val action: Action) : BTMessage(
-    "Command request Message",
-    "Message structure in JSON for Command request",
-    MsgConst.OBJECT
-) {
-    override fun toJson(): JSONObject {
-        val jsonObject = super.toJson()
-
-        val properties = JSONObject()
-        properties.put(MsgConst.MSGID, MessageIds.COMMAND_REQ)
-        properties.put("action", action.toJson())
-
-        jsonObject.put(MsgConst.PROPERTIES, properties)
-
-        return jsonObject
-    }
-
-    open class Action(private val enum: String, private val description: String) {
-        open fun toJson(): JSONObject {
-            val jsonObject = JSONObject()
-            jsonObject.put(MsgConst.ENUM, enum)
-            jsonObject.put(MsgConst.DESCRIPTION, description)
-            return jsonObject
-        }
-    }
-
-    class ConfigAction(
-        enum: String,
-        description: String,
-        val configName: String,
-        val configValue: String
-    ) :
-        Action(enum, description) {
-
-        constructor(configName: String, configValue: String) : this(
-            "execute",
-            "config",
-            configName,
-            configValue
+/**
+ * Is sent by the phone to inform the camera about some more or less relevant information.
+ * @param wifiDirect whether to use wifi direct
+ * @param wifiMacAddress the mac address of the wifi adapter of this phone. Seems to not be relevant
+ * @param deviceName the name of the phone. Can be whatever
+ * @param appVersion the version of the app. Can be whatever
+ * @param retailMode not sure what retail mode is. Keep it off to be safe
+ */
+class BTPhoneInfoMessage(
+    val wifiDirect: Boolean,
+    val wifiMacAddress: String,
+    val deviceName: String,
+    val appVersion: String,
+    val retailMode: Boolean
+) : BTMessage2() {
+    fun asBtMessageContainer(): BTMessageContainer {
+        return BTMessageContainer(
+            // Title seems to be required for whatever reason
+            title = "Phone Device information Message",
+            //description = "Message structure in JSON for Phone Device information",
+            properties = BTMessageProperties(
+                MsgId.DEVICE_INFO,
+                wifiDirect = BTMessageWifiDirect(
+                    wifiDirect.toString(), BTMessageWifiDirectNegotiation("5G-GO")
+                ),
+                wifiMacAddress = BTMessageProperty("string", wifiMacAddress),
+                deviceName = BTMessageProperty("string", deviceName),
+                appVersion = BTMessageProperty("string", appVersion),
+                opMode = BTMessageProperty("string", if (retailMode) "retail" else "user")
+            )
         )
-
-        override fun toJson(): JSONObject {
-            val jsonObject = super.toJson()
-
-            val config = JSONObject()
-            config.put(MsgConst.DESCRIPTION, configValue)
-
-            val items = JSONObject()
-            items.put(configName, config)
-
-            jsonObject.put(MsgConst.ITEMS, items)
-            return jsonObject
-        }
     }
+}
 
+/**
+ * Is sent by the camera to inform the phone about some basic camera information.
+ * @param modelName the camera model name (SM-C200 for 2016 model, SM-R210 for 2017 model)
+ * @param modelVersion the firmware version of the camera
+ * @param channel not quite sure what this is
+ * @param wifiDirectMac mac address for wifi direct
+ * @param softApSsid SSID for the soft access point
+ * @param softApPassword password for the soft access point
+ * @param boardRevision the hardware revision of the camera main-board
+ * @param serialNumber the camera's serial number
+ * @param uniqueNumber the camera's unique number
+ * @param wifiMac the camera's wifi mac address
+ * @param bluetoothMac the camera's bluetooth mac address
+ * @param btFotaTestUrl not quite sure what this is
+ * @param firmwareType the type of firmware on the camera (only ever encountered user)
+ */
+class BTCameraInfoMessage(
+    val modelName: String,
+    val modelVersion: String,
+    val channel: Int,
+    val wifiDirectMac: String,
+    val softApSsid: String,
+    val softApPassword: String,
+    val boardRevision: String,
+    val serialNumber: String,
+    val uniqueNumber: String,
+    val wifiMac: String,
+    val bluetoothMac: String,
+    val btFotaTestUrl: String,
+    val firmwareType: Int,
+) : BTMessage2() {
     companion object {
-        fun fromJson(jsonObject: JSONObject): BTCommandReq {
-            val title = jsonObject.getString(MsgConst.TITLE)
-            val description = jsonObject.getString(MsgConst.DESCRIPTION)
-            val type = jsonObject.getString(MsgConst.TYPE)
+        fun fromBTMessageContainer(msg: BTMessageContainer): BTCameraInfoMessage? {
+            if (msg.properties.msgId != MsgId.DEVICE_INFO) return null
 
-            val action = jsonObject.getJSONObject("properties").getJSONObject("action")
-            val items = action.getJSONObject("items")
+            val modelName = msg.properties.modelName?.description ?: return null
+            val modelVersion = msg.properties.modelVersion?.description ?: return null
+            val channel = msg.properties.channel?.description ?: return null
+            val wifiDirectMac = msg.properties.wifiDirectMac?.description ?: return null
+            val softApSsid = msg.properties.softApSsid?.description ?: return null
+            val softApPassword = msg.properties.softApPassword?.description ?: return null
+            val boardRevision = msg.properties.boardRevision?.description ?: return null
+            val serialNumber = msg.properties.serialNumber?.description ?: return null
+            val uniqueNumber = msg.properties.uniqueNumber?.description ?: return null
+            val wifiMac = msg.properties.wifiMac?.description ?: return null
+            val bluetoothMac = msg.properties.btMac?.description ?: return null
+            val btFotaTestUrl = msg.properties.btFotaTestUrl?.description ?: return null
+            val firmwareType = msg.properties.firmwareType?.description ?: return null
 
-            val name = items.keys().next()
-            val value = items.getJSONObject(name).getString("description")
-
-            return BTCommandReq(ConfigAction(action.getString("enum"), action.getString("description"), name, value))
+            return BTCameraInfoMessage(
+                modelName,
+                modelVersion,
+                channel,
+                wifiDirectMac,
+                softApSsid,
+                softApPassword,
+                boardRevision,
+                serialNumber,
+                uniqueNumber,
+                wifiMac,
+                bluetoothMac,
+                btFotaTestUrl,
+                firmwareType
+            )
         }
     }
 }
 
-class BTCommandRsp(val actionName: String, val response: String, val responseCode: Int) : BTMessage(
-    "Command response Message",
-    "Message structure in JSON for Command response",
-    MsgConst.OBJECT
-) {
-
-    fun isSuccess(actionName: String): Boolean {
-        return this.actionName == actionName && responseCode == 100
-    }
-
+class BTCameraConfigMessage(
+    val beep: String,
+    val ledIndicator: String,
+    val autoPowerOff: String,
+    val videoOut: String,
+    val format: String,
+    val reset: String,
+    val mode: String,
+    val timer: String,
+    val loopingVideoTime: String,
+) : BTMessage2() {
     companion object {
-        fun fromJson(jsonObject: JSONObject): BTCommandRsp {
-            val properties = jsonObject.getJSONObject(MsgConst.PROPERTIES)
-            val result = properties.getJSONObject("result")
+        fun fromBTMessageContainer(msg: BTMessageContainer): BTCameraConfigMessage? {
+            if (msg.properties.msgId != MsgId.CONFIG_INFO) return null
 
-            val response = result.getString(MsgConst.ENUM)
-            val actionName = result.getString(MsgConst.DESCRIPTION)
+            val items = msg.properties.functions?.items ?: return null
 
-            val responseCode = properties.getJSONObject("r-code").getInt(MsgConst.DESCRIPTION)
-
-            return BTCommandRsp(actionName, response, responseCode)
+            return BTCameraConfigMessage(
+                items.beep.default,
+                items.led.default,
+                items.autoPowerOff.default,
+                items.videoOut.default,
+                items.format.default,
+                items.reset.default,
+                items.mode.default,
+                items.timer.default,
+                items.loopingRecordTime.default
+            )
         }
     }
 }
 
-class BTDateTimeReq : BTMessage(
-    "Date-Time request Message",
-    "Message structure in JSON for Date-Time request",
-    MsgConst.OBJECT
-) {
-    companion object {
-        fun fromJson(jsonObject: JSONObject): BTDateTimeReq {
-            return BTDateTimeReq()
-        }
+class BTRemoteShotRequest(val mode: String) : BTMessage2() {
+    fun asBtMessageContainer(): BTMessageContainer {
+        return BTMessageContainer(
+            properties = BTMessageProperties(
+                MsgId.SHOT_REQ, items = BTMessageProperty("string", mode)
+            )
+        )
     }
 }
 
-class BTDateTimeRsp : BTMessage(
-    "Date-Time response Message",
-    "Message structure in JSON for Date-Time response",
-    MsgConst.OBJECT
-) {
-    @SuppressLint("SimpleDateFormat")
-    override fun toJson(): JSONObject {
-        val jsonObject = super.toJson()
-
-        val date = Date(System.currentTimeMillis())
-        val dateFormat = SimpleDateFormat("yyy/MM/dd")
-        val timeFormat = SimpleDateFormat("HH:mm:ss")
-        val zoneFormat = SimpleDateFormat("Z")
-
-        val zone = zoneFormat.format(date)
-        val region = zone.substring(0, 3) + ":" + zone.substring(3, 5)
-
-        val isSummerTimer = TimeZone.getDefault().useDaylightTime()
-
-        val properties = JSONObject()
-            .put(MsgConst.MSGID, MessageIds.DATE_TIME_RSP)
-            .put("date", getJsonProperty(dateFormat.format(date)))
-            .put("time", getJsonProperty(timeFormat.format(date)))
-            .put("region", getJsonProperty(region))
-            .put("summer", getJsonProperty(isSummerTimer.toString()))
-
-        jsonObject.put(MsgConst.PROPERTIES, properties)
-
-        return jsonObject
-    }
-}
-
-class BTShotReq(private val mode: String) : BTMessage(
-    "Remote shot request Message",
-    "Message structure in JSON for remote shot request",
-    MsgConst.OBJECT
-) {
-    override fun toJson(): JSONObject {
-        val jsonObject = super.toJson()
-
-        val properties = JSONObject()
-            .put(MsgConst.MSGID, MessageIds.SHOT_REQ)
-            .put(MsgConst.ITEMS, getJsonProperty(mode))
-
-        jsonObject.put(MsgConst.PROPERTIES, properties)
-
-        return jsonObject
-    }
-}
-
-class BTShotRsp(
-    val resultEnum: String,
-    val resultType: String,
+class BTRemoteShotResponse(
+    val result: String,
     val resultCode: Int,
     val recordableTime: Int,
-    val capturableCount: Int
-) : BTMessage(
-    "Remote shot response Message",
-    "Message structure in JSON for remote shot response",
-    MsgConst.OBJECT
-) {
+    val capturableCount: Int,
+) : BTMessage2() {
     companion object {
-        fun fromJson(jsonObject: JSONObject): BTShotRsp {
-            val properties = jsonObject.getJSONObject(MsgConst.PROPERTIES)
+        fun fromBTMessageContainer(msg: BTMessageContainer): BTRemoteShotResponse? {
+            if (msg.properties.msgId != MsgId.SHOT_RSP) return null
 
-            val result = properties.getJSONObject("result")
-            val resultEnum = result.getString(MsgConst.ENUM)
-            val resultType = result.getString(MsgConst.DESCRIPTION)
-
-            val rCode = properties.getJSONObject("r-code")
-            val resultCode = rCode.getInt(MsgConst.DESCRIPTION)
-
-            val info = properties.getJSONObject("extension-info")
+            val result = msg.properties.result?.enum ?: return null
+            val responseCode = msg.properties.resultCode?.description ?: return null
             val recordableTime =
-                info.getJSONObject("recordable-time").getInt(MsgConst.DESCRIPTION)
-
+                msg.properties.extensionInfo?.recordableTime?.description ?: return null
             val capturableCount =
-                info.getJSONObject("capturable-count").getInt(MsgConst.DESCRIPTION)
+                msg.properties.extensionInfo.capturableCount?.description ?: return null
 
-            return BTShotRsp(resultEnum, resultType, resultCode, recordableTime, capturableCount)
+            return BTRemoteShotResponse(
+                result, responseCode, recordableTime, capturableCount
+            )
         }
     }
 }
 
-class BTDeviceDescUrlMsg(val url: String) : BTMessage(
-    "Device Description URL Message",
-    "Message structure in JSON for Device Description URL",
-    MsgConst.OBJECT
-) {
-    companion object {
-        fun fromJson(jsonObject: JSONObject): BTDeviceDescUrlMsg {
-            val url = jsonObject.getJSONObject(MsgConst.PROPERTIES)
-                .getJSONObject("url")
-                .getString(MsgConst.DESCRIPTION)
+class BTCommandRequest(
+    val action: BTCommandAction
+) : BTMessage2() {
+    fun asBtMessageContainer(): BTMessageContainer {
+        val items = null // TODO
+        return BTMessageContainer(
+            properties = BTMessageProperties(
+                MsgId.COMMAND_REQ, action = BTMessageAction(action.enum, action.description, items)
+            )
+        )
+    }
 
-            return BTDeviceDescUrlMsg(url)
+    companion object {
+        fun fromBTMessageContainer(msg: BTMessageContainer): BTCommandRequest? {
+            if (msg.properties.msgId != MsgId.COMMAND_REQ) return null
+
+            val action = when (msg.properties.action?.enum) {
+                "liveview" -> BTCommandActionLiveView()
+                "config" -> BTCommandActionConfig("", "") // TODO
+                else -> null
+            }
+
+            return BTCommandRequest(action ?: return null)
+        }
+    }
+}
+
+class BTCommandResponse(
+    val resultEnum: String,
+    val resultDescription: String,
+    val resultCode: Int,
+) : BTMessage2() {
+    fun asBtMessageContainer(): BTMessageContainer {
+        return BTMessageContainer(
+            properties = BTMessageProperties(
+                MsgId.COMMAND_RSP,
+                result = BTMessageResult(resultEnum, resultDescription),
+                resultCode = BTMessageProperty("number", resultCode),
+            )
+        )
+    }
+
+    fun isSuccess() = resultCode == 100
+
+    companion object {
+        fun fromBTMessageContainer(msg: BTMessageContainer): BTCommandResponse? {
+            if (msg.properties.msgId != MsgId.COMMAND_RSP) return null
+            return BTCommandResponse(
+                msg.properties.result?.enum ?: return null,
+                msg.properties.result.description,
+                msg.properties.resultCode?.description ?: return null,
+            )
+        }
+    }
+}
+
+abstract class BTCommandAction(
+    val enum: String = "execute", val description: String
+)
+
+class BTCommandActionConfig(
+    val configName: String, val configValue: String
+) : BTCommandAction(description = "config")
+
+class BTCommandActionLiveView() : BTCommandAction(description = "liveview")
+
+class BTDeviceDescriptionUrlMessage(val url: String) : BTMessage2() {
+    companion object {
+        fun fromBTMessageContainer(msg: BTMessageContainer): BTDeviceDescriptionUrlMessage? {
+            return BTDeviceDescriptionUrlMessage(msg.properties.url?.description ?: return null)
         }
     }
 }

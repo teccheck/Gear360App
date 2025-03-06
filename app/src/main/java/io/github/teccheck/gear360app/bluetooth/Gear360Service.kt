@@ -20,6 +20,18 @@ private const val SA_TRANSPORT_TYPE = SamAccessoryManager.TRANSPORT_BT
 // Optional things this should do
 // - browse/download media
 // - handle live viewing
+
+// Messages to be exchanged on connection
+// CAMERA: Datetime request
+// PHONE:  Datetime response
+// CAMERA: Widget info request (not sure why this is sent by both devices)
+// PHONE:  Widget info request
+// CAMERA: Widget info response
+// PHONE:  Phone device info
+// CAMERA: Camera device info
+// CAMERA: Camera config info
+// CAMERA: GSIM (Whatever that is)
+
 class Gear360Service : Service() {
     private val binder = LocalBinder()
 
@@ -58,14 +70,15 @@ class Gear360Service : Service() {
         override fun onConnectDevice(name: String?, peer: String?, product: String?) {
             Log.d(TAG, "onConnectDevice $name, $peer, $product")
             handler.postDelayed({
-                val macAddress = WifiUtils.getMacAddress(applicationContext)
-                messageSender.sendPhoneInfo(macAddress)
+                //val macAddress = WifiUtils.getMacAddress(applicationContext)
+                //messageSender.sendPhoneInfo(macAddress)
             }, 2000)
             callback?.onDeviceConnected()
         }
 
         override fun onError(result: Int) {
             Log.d(TAG, "btmStatusCallback onError $result")
+            callback?.onDeviceDisconnected()
         }
 
         override fun onReceive(channelId: Int, data: ByteArray?) {
@@ -162,31 +175,31 @@ class Gear360Service : Service() {
         )
     }
 
-    private fun onMessage(message: BTMessage) {
+    private fun onMessage(message: BTMessage2) {
         when (message) {
-            is BTDateTimeReq -> {
+            is BTDateTimeRequest -> {
                 messageSender.sendDateTimeResponse()
             }
 
-            is BTConfigMsg -> {
-                gear360Configs.setConfigs(message.configs)
+            is BTCameraConfigMessage -> {
+                //gear360Configs.setConfigs(message.configs)
             }
 
-            is BTInfoRsp -> {
+            is BTCameraInfoMessage -> {
                 gear360Info = Gear360Info(
                     message.modelName,
                     message.modelVersion,
                     message.channel,
                     message.wifiDirectMac,
-                    message.apSSID,
-                    message.apPassword,
+                    message.softApSsid,
+                    message.softApPassword,
                     message.boardRevision,
                     message.serialNumber,
                     message.uniqueNumber,
                     message.wifiMac,
-                    message.btMac,
+                    message.bluetoothMac,
                     message.btFotaTestUrl,
-                    message.fwType
+                    message.firmwareType
                 )
 
                 Log.d(
@@ -195,24 +208,47 @@ class Gear360Service : Service() {
                 )
             }
 
-            is BTWidgetReq -> {
+            is BTWidgetInfoRequest -> {
                 messageSender.sendWidgetInfoRequest()
             }
 
-            is BTWidgetRsp -> {
-                gear360Status = message.gear360Status
+            is BTWidgetInfoResponse -> {
+                gear360Status = Gear360Status(
+                    message.battery,
+                    message.batteryState,
+                    message.totalMemory,
+                    message.usedMemory,
+                    message.freeMemory,
+                    message.recordState,
+                    message.captureState,
+                    message.autoPowerOff,
+                    message.recordableTime,
+                    message.capturableCount
+                )
+
+                val macAddress = WifiUtils.getMacAddress(applicationContext)
+                messageSender.sendPhoneInfo(macAddress)
             }
 
-            is BTShotRsp -> {
+            is BTRemoteShotResponse -> {
                 gear360Status?.capturableCount = message.capturableCount
                 gear360Status?.recordableTime = message.recordableTime
             }
 
-            is BTCommandReq -> {
-                if (message.action is BTCommandReq.ConfigAction) {
-                    Log.d(TAG, "Config set ${message.action.configName} to ${message.action.configValue}")
+            is BTCommandRequest -> {
+                if (message.action is BTCommandActionConfig) {
+                    Log.d(
+                        TAG,
+                        "Config set ${message.action.configName} to ${message.action.configValue}"
+                    )
                     val config = gear360Configs.getConfig(message.action.configName) ?: return
-                    gear360Configs.setConfig(Gear360Configs.Config(config.name, message.action.configValue, config.values))
+                    gear360Configs.setConfig(
+                        Gear360Configs.Config(
+                            config.name,
+                            message.action.configValue,
+                            config.values
+                        )
+                    )
                 }
             }
         }
