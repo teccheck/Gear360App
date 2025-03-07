@@ -12,6 +12,7 @@ import io.github.teccheck.gear360app.R
 import io.github.teccheck.gear360app.service.AutoPowerOffTime
 import io.github.teccheck.gear360app.service.BeepVolume
 import io.github.teccheck.gear360app.service.CameraMode
+import io.github.teccheck.gear360app.service.LedIndicator
 import io.github.teccheck.gear360app.service.LoopingVideoTime
 import io.github.teccheck.gear360app.service.TimerTime
 
@@ -79,14 +80,14 @@ class RemoteControlActivity : BaseActivity() {
     }
 
     private fun setupUiValues() {
-        val gear360Configs = gear360Service?.gear360Configs ?: return
+        val config = gear360Service?.gear360Config ?: return
 
         Log.d(TAG, "setupUiValues")
 
         // TODO: Remove duplicate code
 
-        gear360Configs.getCameraMode()?.let { setCameraMode(it) }
-        when (gear360Configs.getCameraMode()) {
+        config.mode?.let { setCameraMode(it) }
+        when (config.mode) {
             CameraMode.PHOTO -> {
                 findViewById<MaterialButton>(R.id.btn_mode_photo).isChecked = true
             }
@@ -104,7 +105,7 @@ class RemoteControlActivity : BaseActivity() {
             }
         }
 
-        when (gear360Configs.getLoopingVideoTime()) {
+        when (config.loopingVideoTime) {
             LoopingVideoTime.MIN_5 -> {
                 findViewById<MaterialButton>(R.id.btn_looping_5_min).isChecked = true
             }
@@ -120,7 +121,7 @@ class RemoteControlActivity : BaseActivity() {
             else -> {}
         }
 
-        when (gear360Configs.getTimerTime()) {
+        when (config.timer) {
             TimerTime.OFF -> {
                 findViewById<MaterialButton>(R.id.btn_timer_off).isChecked = true
             }
@@ -136,7 +137,7 @@ class RemoteControlActivity : BaseActivity() {
             else -> {}
         }
 
-        when (gear360Configs.getBeepVolume()) {
+        when (config.beep) {
             BeepVolume.OFF -> {
                 findViewById<MaterialButton>(R.id.btn_beep_off).isChecked = true
             }
@@ -152,7 +153,7 @@ class RemoteControlActivity : BaseActivity() {
             else -> {}
         }
 
-        when (gear360Configs.getAutoPowerOffTimer()) {
+        when (config.autoPowerOffTime) {
             AutoPowerOffTime.MIN_1 -> {
                 findViewById<MaterialButton>(R.id.btn_power_1_min).isChecked = true
             }
@@ -168,10 +169,7 @@ class RemoteControlActivity : BaseActivity() {
             else -> {}
         }
 
-        val enabled = gear360Configs.getIsLedEnabled()
-        if (enabled != null)
-            ledIndicatorSwitch.isChecked = enabled
-
+        config.led?.let { ledIndicatorSwitch.isChecked = it == LedIndicator.LED_ON }
         uiInitialised = true
     }
 
@@ -191,7 +189,7 @@ class RemoteControlActivity : BaseActivity() {
 
     private fun onCaptureButtonPressed() {
         gear360Service?.let {
-            val photoMode = it.gear360Configs.getCameraMode() == CameraMode.PHOTO
+            val photoMode = it.gear360Config.mode == CameraMode.PHOTO
             val recording = it.gear360Status?.isRecording() ?: false
             it.messageSender.sendShotRequest(photoMode, recording)
         }
@@ -218,7 +216,7 @@ class RemoteControlActivity : BaseActivity() {
     }
 
     private fun onLedSwitchChanged(checked: Boolean) {
-        gear360Service?.messageSender?.sendSetLedIndicators(checked)
+        gear360Service?.messageSender?.sendSetLedIndicators(if (checked) LedIndicator.LED_ON else LedIndicator.LED_OFF)
     }
 
     private fun onTimerTimeSelected(buttonId: Int) {

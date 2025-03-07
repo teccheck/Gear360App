@@ -114,7 +114,7 @@ class Gear360Service : Service() {
         messageLog.messageSent(data.toString(Charsets.UTF_8))
     }
 
-    val gear360Configs = Gear360Configs()
+    var gear360Config = Gear360Config()
     var gear360Info: Gear360Info? = null
     var gear360Status: Gear360Status? = null
 
@@ -195,7 +195,14 @@ class Gear360Service : Service() {
             }
 
             is BTCameraConfigMessage -> {
-                //gear360Configs.setConfigs(message.configs)
+                gear360Config = gear360Config.modify(
+                    mode = CameraMode.fromString(message.mode),
+                    timer = TimerTime.fromString(message.timer),
+                    beep = BeepVolume.fromString(message.beep),
+                    led = LedIndicator.fromString(message.ledIndicator),
+                    autoPowerOffTime = AutoPowerOffTime.fromString(message.autoPowerOff),
+                    loopingVideoTime = LoopingVideoTime.fromString(message.loopingVideoTime),
+                )
             }
 
             is BTCameraInfoMessage -> {
@@ -250,18 +257,7 @@ class Gear360Service : Service() {
 
             is BTCommandRequest -> {
                 if (message.action is BTCommandActionConfig) {
-                    Log.d(
-                        TAG,
-                        "Config set ${message.action.configName} to ${message.action.configValue}"
-                    )
-                    val config = gear360Configs.getConfig(message.action.configName) ?: return
-                    gear360Configs.setConfig(
-                        Gear360Configs.Config(
-                            config.name,
-                            message.action.configValue,
-                            config.values
-                        )
-                    )
+                    gear360Config = gear360Config.merge(message.action.config)
                 }
             }
         }

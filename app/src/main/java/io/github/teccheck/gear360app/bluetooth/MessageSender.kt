@@ -5,7 +5,8 @@ import com.squareup.moshi.Moshi
 import io.github.teccheck.gear360app.service.AutoPowerOffTime
 import io.github.teccheck.gear360app.service.BeepVolume
 import io.github.teccheck.gear360app.service.CameraMode
-import io.github.teccheck.gear360app.service.ConfigConstants
+import io.github.teccheck.gear360app.service.Gear360Config
+import io.github.teccheck.gear360app.service.LedIndicator
 import io.github.teccheck.gear360app.service.LoopingVideoTime
 import io.github.teccheck.gear360app.service.TimerTime
 import java.util.Date
@@ -31,32 +32,31 @@ class MessageSender(private val sender: Sender) {
     }
 
     fun sendChangeMode(mode: CameraMode) {
-        sendConfigChangeCommand(ConfigConstants.MODE, mode.value)
+        sendConfigChangeCommand(Gear360Config(mode = mode))
     }
 
     fun sendChangeLoopingVideoTime(timer: LoopingVideoTime) {
-        sendConfigChangeCommand(ConfigConstants.LOOPING_VIDEO_TIME, timer.value)
+        sendConfigChangeCommand(Gear360Config(loopingVideoTime = timer))
     }
 
-    fun sendSetLedIndicators(active: Boolean) {
-        val value = if (active) ConfigConstants.LED_ON else ConfigConstants.LED_OFF
-        sendConfigChangeCommand(ConfigConstants.LED_INDICATOR, value)
+    fun sendSetLedIndicators(active: LedIndicator) {
+        sendConfigChangeCommand(Gear360Config(led = active))
     }
 
     fun sendChangeTimerTimer(time: TimerTime) {
-        sendConfigChangeCommand(ConfigConstants.TIMER, time.value)
+        sendConfigChangeCommand(Gear360Config(timer = time))
     }
 
     fun sendChangeBeepVolume(volume: BeepVolume) {
-        sendConfigChangeCommand(ConfigConstants.BEEP, volume.value)
+        sendConfigChangeCommand(Gear360Config(beep = volume))
     }
 
     fun sendChangePowerOffTime(time: AutoPowerOffTime) {
-        sendConfigChangeCommand(ConfigConstants.AUTO_POWER_OFF, time.value)
+        sendConfigChangeCommand(Gear360Config(autoPowerOffTime = time))
     }
 
-    private fun sendConfigChangeCommand(configName: String, configValue: String) {
-        sendMessage(BTCommandRequest(BTCommandActionConfig(configName, configValue)).asBtMessageContainer())
+    private fun sendConfigChangeCommand(config: Gear360Config) {
+        sendMessage(BTCommandRequest(BTCommandActionConfig(config)).asBtMessageContainer())
     }
 
     fun sendShotRequest(isPhotoMode: Boolean, isRecording: Boolean) {

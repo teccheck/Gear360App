@@ -2,6 +2,13 @@ package io.github.teccheck.gear360app.bluetooth
 
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
+import io.github.teccheck.gear360app.service.AutoPowerOffTime
+import io.github.teccheck.gear360app.service.BeepVolume
+import io.github.teccheck.gear360app.service.CameraMode
+import io.github.teccheck.gear360app.service.Gear360Config
+import io.github.teccheck.gear360app.service.LedIndicator
+import io.github.teccheck.gear360app.service.LoopingVideoTime
+import io.github.teccheck.gear360app.service.TimerTime
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -209,8 +216,12 @@ class BTMessageAction(
 
 @JsonClass(generateAdapter = true)
 class BTMessageConfigActionItems(
-    val mode: BTMessageConfigActionItem?,
-    val timer: BTMessageConfigActionItem?,
+    @Json(name = "Mode") val mode: BTMessageConfigActionItem? = null,
+    @Json(name = "timer") val timer: BTMessageConfigActionItem? = null,
+    @Json(name = "Beep") val beep: BTMessageConfigActionItem? = null,
+    @Json(name = "Led indicator") val ledIndicator: BTMessageConfigActionItem? = null,
+    @Json(name = "Auto Power Off") val autoPowerOff: BTMessageConfigActionItem? = null,
+    @Json(name = "Looping Video Recording Time") val loopingVideoTime: BTMessageConfigActionItem? = null,
 )
 
 @JsonClass(generateAdapter = true)
@@ -499,7 +510,27 @@ class BTCommandRequest(
     val action: BTCommandAction
 ) : BTMessage2() {
     fun asBtMessageContainer(): BTMessageContainer {
-        val items = null // TODO
+        val items = if (action is BTCommandActionConfig) {
+            BTMessageConfigActionItems(
+                mode = action.config.mode?.value?.let { BTMessageConfigActionItem(it) },
+                timer = action.config.timer?.value?.let { BTMessageConfigActionItem(it) },
+                beep = action.config.beep?.value?.let { BTMessageConfigActionItem(it) },
+                ledIndicator = action.config.led?.value?.let { BTMessageConfigActionItem(it) },
+                autoPowerOff = action.config.autoPowerOffTime?.value?.let {
+                    BTMessageConfigActionItem(
+                        it
+                    )
+                },
+                loopingVideoTime = action.config.loopingVideoTime?.value?.let {
+                    BTMessageConfigActionItem(
+                        it
+                    )
+                },
+            )
+        } else {
+            null
+        }
+
         return BTMessageContainer(
             properties = BTMessageProperties(
                 MsgId.COMMAND_REQ, action = BTMessageAction(action.enum, action.description, items)
@@ -510,10 +541,25 @@ class BTCommandRequest(
     companion object {
         fun fromBTMessageContainer(msg: BTMessageContainer): BTCommandRequest? {
             if (msg.properties.msgId != MsgId.COMMAND_REQ) return null
+            val items = msg.properties.action?.items
 
             val action = when (msg.properties.action?.enum) {
                 "liveview" -> BTCommandActionLiveView()
-                "config" -> BTCommandActionConfig("", "") // TODO
+                "config" -> BTCommandActionConfig(
+                    Gear360Config(
+                        mode = items?.mode?.description?.let { CameraMode.fromString(it) },
+                        timer = items?.timer?.description?.let { TimerTime.fromString(it) },
+                        beep = items?.beep?.description?.let { BeepVolume.fromString(it) },
+                        led = items?.ledIndicator?.description?.let { LedIndicator.fromString(it) },
+                        autoPowerOffTime = items?.autoPowerOff?.description?.let {
+                            AutoPowerOffTime.fromString(it)
+                        },
+                        loopingVideoTime = items?.loopingVideoTime?.description?.let {
+                            LoopingVideoTime.fromString(it)
+                        },
+                    )
+                )
+
                 else -> null
             }
 
@@ -555,9 +601,7 @@ abstract class BTCommandAction(
     val enum: String = "execute", val description: String
 )
 
-class BTCommandActionConfig(
-    val configName: String, val configValue: String
-) : BTCommandAction(description = "config")
+class BTCommandActionConfig(val config: Gear360Config) : BTCommandAction(description = "config")
 
 class BTCommandActionLiveView() : BTCommandAction(description = "liveview")
 
