@@ -1,4 +1,4 @@
-package io.github.teccheck.gear360app.bluetooth
+package io.github.teccheck.gear360app.service
 
 enum class CameraMode(val value: String) {
     PHOTO("Photo"),

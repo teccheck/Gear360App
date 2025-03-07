@@ -9,7 +9,11 @@ import androidx.appcompat.widget.SwitchCompat
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import io.github.teccheck.gear360app.R
-import io.github.teccheck.gear360app.bluetooth.*
+import io.github.teccheck.gear360app.service.AutoPowerOffTime
+import io.github.teccheck.gear360app.service.BeepVolume
+import io.github.teccheck.gear360app.service.CameraMode
+import io.github.teccheck.gear360app.service.LoopingVideoTime
+import io.github.teccheck.gear360app.service.TimerTime
 
 private const val TAG = "RemoteControlActivity"
 

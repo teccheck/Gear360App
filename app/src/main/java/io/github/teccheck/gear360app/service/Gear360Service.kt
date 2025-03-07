@@ -1,4 +1,4 @@
-package io.github.teccheck.gear360app.bluetooth
+package io.github.teccheck.gear360app.service
 
 import android.app.Service
 import android.content.Intent
@@ -7,6 +7,19 @@ import android.util.Log
 import com.samsung.android.sdk.accessory.SAAgentV2
 import com.samsung.android.sdk.accessorymanager.SamAccessoryManager
 import com.samsung.android.sdk.accessorymanager.SamDevice
+import io.github.teccheck.gear360app.bluetooth.BTCameraConfigMessage
+import io.github.teccheck.gear360app.bluetooth.BTCameraInfoMessage
+import io.github.teccheck.gear360app.bluetooth.BTCommandActionConfig
+import io.github.teccheck.gear360app.bluetooth.BTCommandRequest
+import io.github.teccheck.gear360app.bluetooth.BTDateTimeRequest
+import io.github.teccheck.gear360app.bluetooth.BTMProviderService
+import io.github.teccheck.gear360app.bluetooth.BTMessage2
+import io.github.teccheck.gear360app.bluetooth.BTRemoteShotResponse
+import io.github.teccheck.gear360app.bluetooth.BTWidgetInfoRequest
+import io.github.teccheck.gear360app.bluetooth.BTWidgetInfoResponse
+import io.github.teccheck.gear360app.bluetooth.MessageHandler
+import io.github.teccheck.gear360app.bluetooth.MessageLog
+import io.github.teccheck.gear360app.bluetooth.MessageSender
 import io.github.teccheck.gear360app.utils.WifiUtils
 
 private const val TAG = "Gear360Service"

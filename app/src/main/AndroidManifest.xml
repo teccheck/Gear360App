@@ -79,7 +79,7 @@
         <activity android:name=".activity.ScanActivity" />
         <activity android:name=".activity.TestActivity" />
 
-        <service android:name=".bluetooth.Gear360Service" />
+        <service android:name=".service.Gear360Service" />
         <service android:name="com.samsung.android.sdk.accessory.SAService" />
         <service
             android:name="com.samsung.android.sdk.accessory.SAJobService"

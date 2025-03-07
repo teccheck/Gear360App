@@ -6,7 +6,7 @@ import android.content.ServiceConnection
 import android.os.IBinder
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
-import io.github.teccheck.gear360app.bluetooth.Gear360Service
+import io.github.teccheck.gear360app.service.Gear360Service
 
 abstract class BaseActivity : AppCompatActivity() {
 

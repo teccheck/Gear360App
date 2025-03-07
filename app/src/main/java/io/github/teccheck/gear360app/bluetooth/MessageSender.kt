@@ -2,6 +2,12 @@ package io.github.teccheck.gear360app.bluetooth
 
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
+import io.github.teccheck.gear360app.service.AutoPowerOffTime
+import io.github.teccheck.gear360app.service.BeepVolume
+import io.github.teccheck.gear360app.service.CameraMode
+import io.github.teccheck.gear360app.service.ConfigConstants
+import io.github.teccheck.gear360app.service.LoopingVideoTime
+import io.github.teccheck.gear360app.service.TimerTime
 import java.util.Date
 
 private const val TAG = "MessageSender"

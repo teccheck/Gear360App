@@ -1,4 +1,4 @@
-package io.github.teccheck.gear360app.bluetooth
+package io.github.teccheck.gear360app.service
 
 data class Gear360Status(
     var battery: Int,
