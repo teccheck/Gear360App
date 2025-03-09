@@ -216,7 +216,8 @@ class BTMessageAction(
 
 @JsonClass(generateAdapter = true)
 class BTMessageConfigActionItems(
-    @Json(name = "Mode") val mode: BTMessageConfigActionItem? = null,
+    @Json(name = "Mode") val modeSend: BTMessageConfigActionItem? = null,
+    @Json(name = "mode") val modeReceive: BTMessageConfigActionItem? = null,
     @Json(name = "timer") val timer: BTMessageConfigActionItem? = null,
     @Json(name = "Beep") val beep: BTMessageConfigActionItem? = null,
     @Json(name = "Led indicator") val ledIndicator: BTMessageConfigActionItem? = null,
@@ -512,7 +513,7 @@ class BTCommandRequest(
     fun asBtMessageContainer(): BTMessageContainer {
         val items = if (action is BTCommandActionConfig) {
             BTMessageConfigActionItems(
-                mode = action.config.mode?.value?.let { BTMessageConfigActionItem(it) },
+                modeSend = action.config.mode?.value?.let { BTMessageConfigActionItem(it) },
                 timer = action.config.timer?.value?.let { BTMessageConfigActionItem(it) },
                 beep = action.config.beep?.value?.let { BTMessageConfigActionItem(it) },
                 ledIndicator = action.config.led?.value?.let { BTMessageConfigActionItem(it) },
@@ -545,9 +546,9 @@ class BTCommandRequest(
 
             val action = when (msg.properties.action?.enum) {
                 "liveview" -> BTCommandActionLiveView()
-                "config" -> BTCommandActionConfig(
+                "set" -> BTCommandActionConfig(
                     Gear360Config(
-                        mode = items?.mode?.description?.let { CameraMode.fromString(it) },
+                        mode = items?.modeReceive?.description?.let { CameraMode.fromString(it) },
                         timer = items?.timer?.description?.let { TimerTime.fromString(it) },
                         beep = items?.beep?.description?.let { BeepVolume.fromString(it) },
                         led = items?.ledIndicator?.description?.let { LedIndicator.fromString(it) },
