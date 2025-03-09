@@ -62,7 +62,7 @@ class MessageSender(private val sender: Sender) {
     fun sendShotRequest(isPhotoMode: Boolean, isRecording: Boolean) {
         val mode = if (isPhotoMode)
             "capture"
-        else if (isRecording)
+        else if (!isRecording)
             "record"
         else
             "record stop"
