@@ -45,6 +45,15 @@ private const val SA_TRANSPORT_TYPE = SamAccessoryManager.TRANSPORT_BT
 // CAMERA: Camera config info
 // CAMERA: GSIM (Whatever that is)
 
+// APIs this should provide
+// LiveData for connection status
+// LiveData for camera status and config
+// Methods to connect/disconnect
+// Methods to change camera config
+// Methods to take photos, start/stop recordings
+// Method to start live view
+// Whatever the Gallery requires
+
 class Gear360Service : Service() {
     private val binder = LocalBinder()
 
@@ -257,6 +266,7 @@ class Gear360Service : Service() {
 
             is BTCommandRequest -> {
                 if (message.action is BTCommandActionConfig) {
+                    Log.d(TAG, "Merge config: ${message.action.config}")
                     gear360Config = gear360Config.merge(message.action.config)
                 }
             }

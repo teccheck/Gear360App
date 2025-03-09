@@ -36,4 +36,8 @@ data class Gear360Config(
             config.loopingVideoTime
         )
     }
+
+    override fun toString(): String {
+        return "Gear360Config(mode=$mode, timer=$timer, beep=$beep, led=$led, autoPowerOffTime=$autoPowerOffTime, loopingVideoTime=$loopingVideoTime)"
+    }
 }
