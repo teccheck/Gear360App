@@ -4,7 +4,7 @@ enum class CameraMode(val value: String) {
     PHOTO("Photo"),
     VIDEO("Video"),
     LOOPING_VIDEO("Looping Video"),
-    TIME_LAPSE("Time Lapse");
+    TIME_LAPSE("Time lapse");
 
     companion object {
         fun fromString(value: String): CameraMode? {
