@@ -9,11 +9,9 @@ import androidx.appcompat.widget.AppCompatImageView
 import androidx.vectordrawable.graphics.drawable.Animatable2Compat
 import androidx.vectordrawable.graphics.drawable.AnimatedVectorDrawableCompat
 import io.github.teccheck.gear360app.R
-import io.github.teccheck.gear360app.utils.ConnectionState
-
+import io.github.teccheck.gear360app.service.ConnectionState
 
 class ConnectionDots(context: Context, attrs: AttributeSet) : AppCompatImageView(context, attrs) {
-
     var animating = false
 
     init {
@@ -50,6 +48,7 @@ class ConnectionDots(context: Context, attrs: AttributeSet) : AppCompatImageView
                 (drawable as AnimatedVectorDrawableCompat).stop()
                 imageTintList = null
             }
+            else -> {}
         }
     }
 }

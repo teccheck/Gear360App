@@ -59,15 +59,13 @@ private const val SA_TRANSPORT_TYPE = SamAccessoryManager.TRANSPORT_BT
 class Gear360Service : Service() {
     private val binder = LocalBinder()
 
-    private val handler = Handler(Looper.getMainLooper())
-
     private var connectedDeviceAddress: String? = null
-    private var callback: Callback? = null
 
     private var samAccessoryManager: SamAccessoryManager? = null
     private val samListener = object : SamAccessoryManager.AccessoryEventListener {
         override fun onAccessoryConnected(device: SamDevice) {
             Log.d(TAG, "onAccessoryConnected $device")
+            connectedDeviceAddress = device.address
             setupBTMProviderService()
         }
 
@@ -81,7 +79,7 @@ class Gear360Service : Service() {
                 Log.d(TAG, "Already connected")
                 setupBTMProviderService()
             } else {
-                callback?.onDeviceDisconnected()
+                updateConnectionState(ConnectionState.DISCONNECTED)
             }
         }
 
@@ -93,16 +91,12 @@ class Gear360Service : Service() {
     private val btmStatusCallback = object : BTMProviderService.StatusCallback {
         override fun onConnectDevice(name: String?, peer: String?, product: String?) {
             Log.d(TAG, "onConnectDevice $name, $peer, $product")
-            handler.postDelayed({
-                //val macAddress = WifiUtils.getMacAddress(applicationContext)
-                //messageSender.sendPhoneInfo(macAddress)
-            }, 2000)
-            callback?.onDeviceConnected()
+            updateConnectionState(ConnectionState.CONNECTED)
         }
 
         override fun onError(result: Int) {
             Log.d(TAG, "btmStatusCallback onError $result")
-            callback?.onDeviceDisconnected()
+            updateConnectionState(ConnectionState.DISCONNECTED)
         }
 
         override fun onReceive(channelId: Int, data: ByteArray?) {
@@ -114,9 +108,12 @@ class Gear360Service : Service() {
         override fun onServiceDisconnection() {
             Log.d(TAG, "onServiceDisconnection")
             btmProviderService?.closeConnection()
-            callback?.onDeviceDisconnected()
+            updateConnectionState(ConnectionState.DISCONNECTED)
         }
     }
+
+    private val _connectionState = MutableLiveData<ConnectionState>(ConnectionState.INVALID)
+    val connectionState: LiveData<ConnectionState> = _connectionState
 
     private val _gear360Config = MutableLiveData<Gear360Config>()
     val gear360Config: LiveData<Gear360Config> = _gear360Config
@@ -138,20 +135,7 @@ class Gear360Service : Service() {
         super.onCreate()
 
         messageHandler.addMessageListener(this::onMessage)
-
-        // SamAccessoryManager needs to be initialised on another thread for whatever reason
-        val handlerThread = HandlerThread("$TAG SAThread")
-        handlerThread.start()
-
-        if (handlerThread.looper == null)
-            return
-
-        val handler = Handler(handlerThread.looper)
-        handler.post {
-            samAccessoryManager = SamAccessoryManager.getInstance(applicationContext, samListener)
-            Handler(Looper.getMainLooper()).post { callback?.onSAMStarted() }
-            handlerThread.quitSafely()
-        }
+        initSAM()
     }
 
     override fun onDestroy() {
@@ -164,21 +148,32 @@ class Gear360Service : Service() {
         samAccessoryManager?.release()
     }
 
-    fun setCallback(callback: Callback) {
-        this.callback = callback
-    }
-
     fun connect(address: String) {
-        samAccessoryManager?.let {
-            it.connect(address, SA_TRANSPORT_TYPE)
-            connectedDeviceAddress = address
-        }
+        updateConnectionState(ConnectionState.CONNECTING)
+        samAccessoryManager?.connect(address, SA_TRANSPORT_TYPE)
     }
 
     fun disconnect(address: String? = connectedDeviceAddress) {
         btmProviderService?.closeConnection()
         btmProviderService?.releaseAgent()
-        address?.let { samAccessoryManager?.disconnect(it, SA_TRANSPORT_TYPE) }
+        samAccessoryManager?.disconnect(address ?: return, SA_TRANSPORT_TYPE)
+    }
+
+    private fun initSAM() {
+        // SamAccessoryManager needs to be initialised on another thread for whatever reason
+        val handlerThread = HandlerThread("$TAG SAThread")
+        handlerThread.start()
+
+        val handler = Handler(handlerThread.looper ?: return)
+        handler.post {
+            samAccessoryManager = SamAccessoryManager.getInstance(applicationContext, samListener)
+            Handler(Looper.getMainLooper()).post { onSAMInitialised() }
+            handlerThread.quitSafely()
+        }
+    }
+
+    private fun onSAMInitialised() {
+        updateConnectionState(ConnectionState.DISCONNECTED)
     }
 
     private fun setupBTMProviderService() {
@@ -193,6 +188,7 @@ class Gear360Service : Service() {
 
             override fun onError(errorCode: Int, message: String) {
                 Log.d(TAG, "requestAgentCallback onError $errorCode, $message")
+                updateConnectionState(ConnectionState.DISCONNECTED)
             }
         }
 
@@ -286,6 +282,11 @@ class Gear360Service : Service() {
         }
     }
 
+    private fun updateConnectionState(state: ConnectionState) {
+        Log.d(TAG, "Update connection state: $state")
+        _connectionState.postValue(state)
+    }
+
     private fun updateGear360Config(config: Gear360Config) {
         Log.d(TAG, "Update config: $config")
         val old = gear360Config.value ?: Gear360Config()
@@ -316,13 +317,5 @@ class Gear360Service : Service() {
         fun getService(): Gear360Service {
             return this@Gear360Service
         }
-    }
-
-    interface Callback {
-        fun onSAMStarted()
-
-        fun onDeviceConnected()
-
-        fun onDeviceDisconnected()
     }
 }

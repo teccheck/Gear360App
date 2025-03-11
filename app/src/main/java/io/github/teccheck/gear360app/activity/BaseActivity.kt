@@ -6,6 +6,7 @@ import android.content.ServiceConnection
 import android.os.IBinder
 import android.view.MenuItem
 import androidx.appcompat.app.AppCompatActivity
+import io.github.teccheck.gear360app.service.ConnectionState
 import io.github.teccheck.gear360app.service.Gear360Service
 
 abstract class BaseActivity : AppCompatActivity() {
@@ -15,7 +16,10 @@ abstract class BaseActivity : AppCompatActivity() {
     private val gearServiceConnection = object : ServiceConnection {
         override fun onServiceConnected(componentName: ComponentName, service: IBinder) {
             gear360Service = (service as Gear360Service.LocalBinder).getService()
-            gear360Service?.setCallback(gear360ServiceCallback)
+            gear360Service?.connectionState?.observe(
+                this@BaseActivity,
+                this@BaseActivity::onConnectionStateChanged
+            )
             onGearServiceConnected()
         }
 
@@ -25,25 +29,9 @@ abstract class BaseActivity : AppCompatActivity() {
         }
     }
 
-    private val gear360ServiceCallback = object : Gear360Service.Callback {
-        override fun onSAMStarted() {
-            this@BaseActivity.onSAMStarted()
-        }
-
-        override fun onDeviceConnected() {
-            this@BaseActivity.onDeviceConnected()
-        }
-
-        override fun onDeviceDisconnected() {
-            this@BaseActivity.onDeviceDisconnected()
-        }
-    }
-
     protected open fun onGearServiceConnected() {}
     protected open fun onGearServiceDisconnected() {}
-    protected open fun onSAMStarted() {}
-    protected open fun onDeviceConnected() {}
-    protected open fun onDeviceDisconnected() {}
+    protected open fun onConnectionStateChanged(state: ConnectionState) {}
 
     protected fun startGear360Service(): Boolean {
         val intent = Intent(this, Gear360Service::class.java)

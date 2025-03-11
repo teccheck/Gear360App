@@ -3,6 +3,7 @@
 
     <!-- HomeActivity -->
     <string name="btn_connect">Connect</string>
+    <string name="btn_disconnect">Disconnect</string>
     <string name="btn_camera">Camera</string>
     <string name="btn_camera_description">Take 360° pictures and videos.</string>
     <string name="btn_remote_control">Remote control</string>

@@ -4,7 +4,6 @@ import android.content.Intent
 import android.content.res.ColorStateList
 import android.os.*
 import android.util.Log
-import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
@@ -13,7 +12,7 @@ import io.github.teccheck.gear360app.bluetooth.BTCommandResponse
 import io.github.teccheck.gear360app.bluetooth.BTDeviceDescriptionUrlMessage
 import io.github.teccheck.gear360app.bluetooth.BTMessage2
 import io.github.teccheck.gear360app.bluetooth.MessageHandler
-import io.github.teccheck.gear360app.utils.ConnectionState
+import io.github.teccheck.gear360app.service.ConnectionState
 import io.github.teccheck.gear360app.utils.SettingsHelper
 import io.github.teccheck.gear360app.utils.WifiUtils
 import io.github.teccheck.gear360app.widget.ConnectionDots
@@ -22,9 +21,6 @@ private const val TAG = "HomeActivity"
 const val EXTRA_MAC_ADDRESS = "mac_address"
 
 class HomeActivity : BaseActivity() {
-
-    private val mainHandler = Handler(Looper.getMainLooper())
-
     private lateinit var connectionDots: ConnectionDots
     private lateinit var connectionDevice: ImageView
     private lateinit var connectionGear: ImageView
@@ -100,23 +96,20 @@ class HomeActivity : BaseActivity() {
         setDeviceConnectivityIndicator(true)
     }
 
-    override fun onSAMStarted() {
-        connect()
-    }
-
-    override fun onDeviceConnected() {
-        mainHandler.post { setGearConnectivityIndicator(ConnectionState.CONNECTED) }
-    }
-
-    override fun onDeviceDisconnected() {
-        mainHandler.post { setGearConnectivityIndicator(ConnectionState.DISCONNECTED) }
+    override fun onConnectionStateChanged(state: ConnectionState) {
+        setGearConnectivityIndicator(state)
+        setDeviceConnectivityIndicator(state != ConnectionState.INVALID)
     }
 
     private fun connect() {
+        if (gear360Service?.connectionState?.value == ConnectionState.CONNECTED) {
+            gear360Service?.disconnect()
+            return
+        }
+
         intent.getStringExtra(EXTRA_MAC_ADDRESS)?.let {
             Log.d(TAG, "Connect to $it")
             gear360Service?.connect(it)
-            setGearConnectivityIndicator(ConnectionState.CONNECTING)
         }
     }
 
@@ -151,19 +144,15 @@ class HomeActivity : BaseActivity() {
 
         connectionGear.imageTintList = ColorStateList.valueOf(color)
 
-        when (connectionState) {
-            ConnectionState.DISCONNECTED -> {
-                connectButton.visibility = View.VISIBLE
-                connectButton.isEnabled = true
-            }
-            ConnectionState.CONNECTING -> {
-                connectButton.visibility = View.VISIBLE
-                connectButton.isEnabled = false
-            }
-            ConnectionState.CONNECTED -> {
-                connectButton.visibility = View.GONE
-                connectButton.isEnabled = false
-            }
+        connectButton.isEnabled = when(connectionState) {
+            ConnectionState.INVALID -> false
+            ConnectionState.CONNECTING -> false
+            else -> true
         }
+
+        connectButton.setText(when(connectionState) {
+            ConnectionState.CONNECTED -> R.string.btn_disconnect
+            else -> R.string.btn_connect
+        })
     }
 }
