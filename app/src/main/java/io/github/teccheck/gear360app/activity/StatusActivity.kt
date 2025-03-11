@@ -27,7 +27,8 @@ class StatusActivity : BaseActivity() {
     }
 
     private fun startRecyclerView() {
-        val status = gear360Service?.gear360Status ?: return
+        // TODO: Live update
+        val status = gear360Service?.gear360StatusLive?.value ?: return
 
         Log.d(TAG, "startRecyclerView")
 
@@ -40,7 +41,7 @@ class StatusActivity : BaseActivity() {
             Property(
                 R.drawable.baseline_battery_std_24,
                 R.string.status_battery_state,
-                status.batteryState
+                status.batteryState ?: "---"
             ),
             Property(
                 R.drawable.ic_baseline_memory_24,
@@ -60,17 +61,17 @@ class StatusActivity : BaseActivity() {
             Property(
                 R.drawable.ic_baseline_videocam_24,
                 R.string.status_record_state,
-                status.recordState
+                status.recordState ?: "---"
             ),
             Property(
                 R.drawable.ic_baseline_photo_camera_24,
                 R.string.status_capture_state,
-                status.captureState
+                status.captureState ?: "---"
             ),
             Property(
                 R.drawable.ic_baseline_build_24,
                 R.string.status_auto_poweroff,
-                status.autoPowerOff
+                status.autoPowerOff ?: "---"
             ),
             Property(
                 R.drawable.ic_baseline_videocam_24,

@@ -5,6 +5,7 @@ import android.util.Log
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
+import androidx.annotation.IdRes
 import androidx.appcompat.widget.SwitchCompat
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
@@ -12,6 +13,7 @@ import io.github.teccheck.gear360app.R
 import io.github.teccheck.gear360app.service.AutoPowerOffTime
 import io.github.teccheck.gear360app.service.BeepVolume
 import io.github.teccheck.gear360app.service.CameraMode
+import io.github.teccheck.gear360app.service.Gear360Config
 import io.github.teccheck.gear360app.service.LedIndicator
 import io.github.teccheck.gear360app.service.LoopingVideoTime
 import io.github.teccheck.gear360app.service.TimerTime
@@ -26,6 +28,12 @@ class RemoteControlActivity : BaseActivity() {
     private lateinit var settingsLayout: LinearLayout
     private lateinit var loopingVideoSettings: LinearLayout
     private lateinit var ledIndicatorSwitch: SwitchCompat
+
+    private lateinit var modeSelector: MaterialButtonToggleGroup
+    private lateinit var loopingVideoToggle: MaterialButtonToggleGroup
+    private lateinit var timerToggle: MaterialButtonToggleGroup
+    private lateinit var beepToggle: MaterialButtonToggleGroup
+    private lateinit var powerToggle: MaterialButtonToggleGroup
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -47,27 +55,27 @@ class RemoteControlActivity : BaseActivity() {
             if (uiInitialised) onLedSwitchChanged(checked)
         }
 
-        val modeSelector = findViewById<MaterialButtonToggleGroup>(R.id.mode_toggle)
+        modeSelector = findViewById(R.id.mode_toggle)
         modeSelector.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked && uiInitialised) onModeSelected(checkedId)
         }
 
-        val loopingVideoToggle = findViewById<MaterialButtonToggleGroup>(R.id.looping_video_toggle)
+        loopingVideoToggle = findViewById(R.id.looping_video_toggle)
         loopingVideoToggle.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked && uiInitialised) onLoopingVideoRecordTimerSelected(checkedId)
         }
 
-        val timerToggle = findViewById<MaterialButtonToggleGroup>(R.id.timer_toggle)
+        timerToggle = findViewById(R.id.timer_toggle)
         timerToggle.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked && uiInitialised) onTimerTimeSelected(checkedId)
         }
 
-        val beepToggle = findViewById<MaterialButtonToggleGroup>(R.id.beep_toggle)
+        beepToggle = findViewById(R.id.beep_toggle)
         beepToggle.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked && uiInitialised) onBeepVolumeSelected(checkedId)
         }
 
-        val powerToggle = findViewById<MaterialButtonToggleGroup>(R.id.power_toggle)
+        powerToggle = findViewById(R.id.power_toggle)
         powerToggle.addOnButtonCheckedListener { _, checkedId, isChecked ->
             if (isChecked && uiInitialised) onPowerTimerSelected(checkedId)
         }
@@ -76,101 +84,76 @@ class RemoteControlActivity : BaseActivity() {
     }
 
     override fun onGearServiceConnected() {
-        setupUiValues()
+        gear360Service?.gear360Config?.observe(this) {
+            setupUiValues(it)
+        }
     }
 
-    private fun setupUiValues() {
-        val config = gear360Service?.gear360Config ?: return
-
+    private fun setupUiValues(config: Gear360Config) {
         Log.d(TAG, "setupUiValues")
 
-        // TODO: Remove duplicate code
-
         config.mode?.let { setCameraMode(it) }
-        when (config.mode) {
-            CameraMode.PHOTO -> {
-                findViewById<MaterialButton>(R.id.btn_mode_photo).isChecked = true
-            }
-            CameraMode.VIDEO -> {
-                findViewById<MaterialButton>(R.id.btn_mode_video).isChecked = true
-            }
-            CameraMode.LOOPING_VIDEO -> {
-                findViewById<MaterialButton>(R.id.btn_mode_looping_video).isChecked = true
-            }
-            CameraMode.TIME_LAPSE -> {
-                findViewById<MaterialButton>(R.id.btn_mode_time_lapse).isChecked = true
-            }
-            else -> {
-                Log.d(TAG, "Mode else")
-            }
-        }
 
-        when (config.loopingVideoTime) {
-            LoopingVideoTime.MIN_5 -> {
-                findViewById<MaterialButton>(R.id.btn_looping_5_min).isChecked = true
+        setToggle(
+            modeSelector, when (config.mode) {
+                CameraMode.PHOTO -> R.id.btn_mode_photo
+                CameraMode.VIDEO -> R.id.btn_mode_video
+                CameraMode.LOOPING_VIDEO -> R.id.btn_mode_looping_video
+                CameraMode.TIME_LAPSE -> R.id.btn_mode_time_lapse
+                else -> null
             }
-            LoopingVideoTime.MIN_30 -> {
-                findViewById<MaterialButton>(R.id.btn_looping_30_min).isChecked = true
-            }
-            LoopingVideoTime.MIN_60 -> {
-                findViewById<MaterialButton>(R.id.btn_looping_60_min).isChecked = true
-            }
-            LoopingVideoTime.MAX -> {
-                findViewById<MaterialButton>(R.id.btn_looping_max).isChecked = true
-            }
-            else -> {}
-        }
+        )
 
-        when (config.timer) {
-            TimerTime.OFF -> {
-                findViewById<MaterialButton>(R.id.btn_timer_off).isChecked = true
+        setToggle(
+            loopingVideoToggle, when (config.loopingVideoTime) {
+                LoopingVideoTime.MIN_5 -> R.id.btn_looping_5_min
+                LoopingVideoTime.MIN_30 -> R.id.btn_looping_30_min
+                LoopingVideoTime.MIN_60 -> R.id.btn_looping_60_min
+                LoopingVideoTime.MAX -> R.id.btn_looping_max
+                else -> null
             }
-            TimerTime.SEC_2 -> {
-                findViewById<MaterialButton>(R.id.btn_timer_2_sec).isChecked = true
-            }
-            TimerTime.SEC_5 -> {
-                findViewById<MaterialButton>(R.id.btn_timer_5_sec).isChecked = true
-            }
-            TimerTime.SEC_10 -> {
-                findViewById<MaterialButton>(R.id.btn_timer_10_sec).isChecked = true
-            }
-            else -> {}
-        }
+        )
 
-        when (config.beep) {
-            BeepVolume.OFF -> {
-                findViewById<MaterialButton>(R.id.btn_beep_off).isChecked = true
+        setToggle(
+            timerToggle, when (config.timer) {
+                TimerTime.OFF -> R.id.btn_timer_off
+                TimerTime.SEC_2 -> R.id.btn_timer_2_sec
+                TimerTime.SEC_5 -> R.id.btn_timer_5_sec
+                TimerTime.SEC_10 -> R.id.btn_timer_10_sec
+                else -> null
             }
-            BeepVolume.LOW -> {
-                findViewById<MaterialButton>(R.id.btn_beep_low).isChecked = true
-            }
-            BeepVolume.MID -> {
-                findViewById<MaterialButton>(R.id.btn_beep_mid).isChecked = true
-            }
-            BeepVolume.HIGH -> {
-                findViewById<MaterialButton>(R.id.btn_beep_high).isChecked = true
-            }
-            else -> {}
-        }
+        )
 
-        when (config.autoPowerOffTime) {
-            AutoPowerOffTime.MIN_1 -> {
-                findViewById<MaterialButton>(R.id.btn_power_1_min).isChecked = true
+        setToggle(
+            beepToggle, when (config.beep) {
+                BeepVolume.OFF -> R.id.btn_beep_off
+                BeepVolume.LOW -> R.id.btn_beep_low
+                BeepVolume.MID -> R.id.btn_beep_mid
+                BeepVolume.HIGH -> R.id.btn_beep_high
+                else -> null
             }
-            AutoPowerOffTime.MIN_3 -> {
-                findViewById<MaterialButton>(R.id.btn_power_3_min).isChecked = true
+        )
+
+        setToggle(
+            powerToggle, when (config.autoPowerOffTime) {
+                AutoPowerOffTime.MIN_1 -> R.id.btn_power_1_min
+                AutoPowerOffTime.MIN_3 -> R.id.btn_power_3_min
+                AutoPowerOffTime.MIN_5 -> R.id.btn_power_5_min
+                AutoPowerOffTime.MIN_30 -> R.id.btn_power_30_min
+                else -> null
             }
-            AutoPowerOffTime.MIN_5 -> {
-                findViewById<MaterialButton>(R.id.btn_power_5_min).isChecked = true
-            }
-            AutoPowerOffTime.MIN_30 -> {
-                findViewById<MaterialButton>(R.id.btn_power_30_min).isChecked = true
-            }
-            else -> {}
-        }
+        )
 
         config.led?.let { ledIndicatorSwitch.isChecked = it == LedIndicator.LED_ON }
         uiInitialised = true
+    }
+
+    private fun setToggle(toggleGroup: MaterialButtonToggleGroup, @IdRes id: Int?) {
+        if (id == null) {
+            toggleGroup.clearChecked()
+        } else {
+            toggleGroup.check(id)
+        }
     }
 
     private fun onModeSelected(buttonId: Int) {
@@ -189,8 +172,8 @@ class RemoteControlActivity : BaseActivity() {
 
     private fun onCaptureButtonPressed() {
         gear360Service?.let {
-            val photoMode = it.gear360Config.mode == CameraMode.PHOTO
-            val recording = it.gear360Status?.isRecording() ?: false
+            val photoMode = it.gear360Config.value?.mode == CameraMode.PHOTO
+            val recording = it.gear360StatusLive.value?.isRecording() ?: false
             it.messageSender.sendShotRequest(photoMode, recording)
         }
     }
@@ -261,14 +244,17 @@ class RemoteControlActivity : BaseActivity() {
                 captureButton.setText(R.string.btn_take_photo)
                 loopingVideoSettings.visibility = View.GONE
             }
+
             CameraMode.VIDEO -> {
                 captureButton.setText(R.string.btn_capture_video)
                 loopingVideoSettings.visibility = View.GONE
             }
+
             CameraMode.LOOPING_VIDEO -> {
                 captureButton.setText(R.string.btn_capture_looping_video)
                 loopingVideoSettings.visibility = View.VISIBLE
             }
+
             CameraMode.TIME_LAPSE -> {
                 captureButton.setText(R.string.btn_capture_time_lapse)
                 loopingVideoSettings.visibility = View.GONE

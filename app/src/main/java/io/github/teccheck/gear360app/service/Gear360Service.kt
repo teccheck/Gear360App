@@ -4,6 +4,8 @@ import android.app.Service
 import android.content.Intent
 import android.os.*
 import android.util.Log
+import androidx.lifecycle.LiveData
+import androidx.lifecycle.MutableLiveData
 import com.samsung.android.sdk.accessory.SAAgentV2
 import com.samsung.android.sdk.accessorymanager.SamAccessoryManager
 import com.samsung.android.sdk.accessorymanager.SamDevice
@@ -116,6 +118,12 @@ class Gear360Service : Service() {
         }
     }
 
+    private val _gear360Config = MutableLiveData<Gear360Config>()
+    val gear360Config: LiveData<Gear360Config> = _gear360Config
+
+    private val _gear360StatusLive = MutableLiveData<Gear360Status>()
+    val gear360StatusLive: LiveData<Gear360Status> = _gear360StatusLive
+
     val messageLog = MessageLog()
     val messageHandler = MessageHandler()
     val messageSender = MessageSender { channelId, data ->
@@ -123,9 +131,7 @@ class Gear360Service : Service() {
         messageLog.messageSent(data.toString(Charsets.UTF_8))
     }
 
-    var gear360Config = Gear360Config()
     var gear360Info: Gear360Info? = null
-    var gear360Status: Gear360Status? = null
 
     override fun onCreate() {
         Log.d(TAG, "onCreate")
@@ -204,13 +210,15 @@ class Gear360Service : Service() {
             }
 
             is BTCameraConfigMessage -> {
-                gear360Config = gear360Config.modify(
-                    mode = CameraMode.fromString(message.mode),
-                    timer = TimerTime.fromString(message.timer),
-                    beep = BeepVolume.fromString(message.beep),
-                    led = LedIndicator.fromString(message.ledIndicator),
-                    autoPowerOffTime = AutoPowerOffTime.fromString(message.autoPowerOff),
-                    loopingVideoTime = LoopingVideoTime.fromString(message.loopingVideoTime),
+                updateGear360Config(
+                    Gear360Config(
+                        mode = CameraMode.fromString(message.mode),
+                        timer = TimerTime.fromString(message.timer),
+                        beep = BeepVolume.fromString(message.beep),
+                        led = LedIndicator.fromString(message.ledIndicator),
+                        autoPowerOffTime = AutoPowerOffTime.fromString(message.autoPowerOff),
+                        loopingVideoTime = LoopingVideoTime.fromString(message.loopingVideoTime),
+                    )
                 )
             }
 
@@ -242,17 +250,19 @@ class Gear360Service : Service() {
             }
 
             is BTWidgetInfoResponse -> {
-                gear360Status = Gear360Status(
-                    message.battery,
-                    message.batteryState,
-                    message.totalMemory,
-                    message.usedMemory,
-                    message.freeMemory,
-                    message.recordState,
-                    message.captureState,
-                    message.autoPowerOff,
-                    message.recordableTime,
-                    message.capturableCount
+                updateGear360Status(
+                    Gear360Status(
+                        message.battery,
+                        message.batteryState,
+                        message.totalMemory,
+                        message.usedMemory,
+                        message.freeMemory,
+                        message.recordState,
+                        message.captureState,
+                        message.autoPowerOff,
+                        message.recordableTime,
+                        message.capturableCount
+                    )
                 )
 
                 val macAddress = WifiUtils.getMacAddress(applicationContext)
@@ -260,17 +270,32 @@ class Gear360Service : Service() {
             }
 
             is BTRemoteShotResponse -> {
-                gear360Status?.capturableCount = message.capturableCount
-                gear360Status?.recordableTime = message.recordableTime
+                updateGear360Status(
+                    Gear360Status(
+                        capturableCount = message.capturableCount,
+                        recordableTime = message.recordableTime
+                    )
+                )
             }
 
             is BTCommandRequest -> {
                 if (message.action is BTCommandActionConfig) {
-                    Log.d(TAG, "Merge config: ${message.action.config}")
-                    gear360Config = gear360Config.merge(message.action.config)
+                    updateGear360Config(message.action.config)
                 }
             }
         }
+    }
+
+    private fun updateGear360Config(config: Gear360Config) {
+        Log.d(TAG, "Update config: $config")
+        val old = gear360Config.value ?: Gear360Config()
+        _gear360Config.postValue(old.merge(config))
+    }
+
+    private fun updateGear360Status(status: Gear360Status) {
+        Log.d(TAG, "Update status: $status")
+        val old = gear360StatusLive.value ?: Gear360Status()
+        _gear360StatusLive.postValue(old.merge(status))
     }
 
     override fun onBind(intent: Intent): IBinder {
