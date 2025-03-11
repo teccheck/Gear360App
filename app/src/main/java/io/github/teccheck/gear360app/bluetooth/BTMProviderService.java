@@ -3,16 +3,13 @@ package io.github.teccheck.gear360app.bluetooth;
 import android.content.Context;
 import android.util.Log;
 
-import com.samsung.android.sdk.accessory.SAAgent;
 import com.samsung.android.sdk.accessory.SAAgentV2;
 import com.samsung.android.sdk.accessory.SAPeerAgent;
 import com.samsung.android.sdk.accessory.SASocket;
 
 import java.io.IOException;
-import java.util.Arrays;
 
 public class BTMProviderService extends SAAgentV2 {
-
     private static final String TAG = "BTMProviderService";
 
     private BTMProviderConnection providerConnection = null;
@@ -62,20 +59,8 @@ public class BTMProviderService extends SAAgentV2 {
     }
 
     @Override
-    protected void onFindPeerAgentsResponse(SAPeerAgent[] peerAgents, int result) {
-        Log.d(TAG, "onFindPeerAgentsResponse " + Arrays.toString(peerAgents) + " " + result);
-
-        if ((result == SAAgent.PEER_AGENT_FOUND) && (peerAgents != null)) {
-            for (SAPeerAgent peerAgent : peerAgents) {
-                requestServiceConnection(peerAgent);
-            }
-        }
-    }
-
-    @Override
     protected void onServiceConnectionRequested(SAPeerAgent peerAgent) {
         Log.d(TAG, "onServiceConnectionRequested " + peerAgent);
-        //if (peerAgent != null)
         acceptServiceConnectionRequest(peerAgent);
     }
 

@@ -66,20 +66,21 @@ class Gear360Service : Service() {
         override fun onAccessoryConnected(device: SamDevice) {
             Log.d(TAG, "onAccessoryConnected $device")
             connectedDeviceAddress = device.address
-            setupBTMProviderService()
+            connectBTMProviderService()
         }
 
         override fun onAccessoryDisconnected(device: SamDevice, reason: Int) {
             Log.d(TAG, "onAccessoryDisconnected $device, $reason")
+            onDisconnect()
         }
 
         override fun onError(device: SamDevice?, reason: Int) {
             Log.d(TAG, "samListener onError $device, $reason")
             if (reason == SamAccessoryManager.ERROR_ACCESSORY_ALREADY_CONNECTED) {
                 Log.d(TAG, "Already connected")
-                setupBTMProviderService()
+                connectBTMProviderService()
             } else {
-                updateConnectionState(ConnectionState.DISCONNECTED)
+                disconnect()
             }
         }
 
@@ -91,12 +92,11 @@ class Gear360Service : Service() {
     private val btmStatusCallback = object : BTMProviderService.StatusCallback {
         override fun onConnectDevice(name: String?, peer: String?, product: String?) {
             Log.d(TAG, "onConnectDevice $name, $peer, $product")
-            updateConnectionState(ConnectionState.CONNECTED)
         }
 
         override fun onError(result: Int) {
             Log.d(TAG, "btmStatusCallback onError $result")
-            updateConnectionState(ConnectionState.DISCONNECTED)
+            disconnect()
         }
 
         override fun onReceive(channelId: Int, data: ByteArray?) {
@@ -107,8 +107,7 @@ class Gear360Service : Service() {
 
         override fun onServiceDisconnection() {
             Log.d(TAG, "onServiceDisconnection")
-            btmProviderService?.closeConnection()
-            updateConnectionState(ConnectionState.DISCONNECTED)
+            onDisconnect()
         }
     }
 
@@ -145,18 +144,25 @@ class Gear360Service : Service() {
         messageHandler.removeMessageListener(this::onMessage)
 
         disconnect()
+        btmProviderService?.closeConnection()
         samAccessoryManager?.release()
     }
 
     fun connect(address: String) {
+        Log.d(TAG, "connect $address")
         updateConnectionState(ConnectionState.CONNECTING)
         samAccessoryManager?.connect(address, SA_TRANSPORT_TYPE)
     }
 
     fun disconnect(address: String? = connectedDeviceAddress) {
-        btmProviderService?.closeConnection()
-        btmProviderService?.releaseAgent()
+        Log.d(TAG, "disconnect $address")
+        updateConnectionState(ConnectionState.DISCONNECTED)
         samAccessoryManager?.disconnect(address ?: return, SA_TRANSPORT_TYPE)
+        onDisconnect()
+    }
+
+    private fun onDisconnect() {
+        connectedDeviceAddress = null
     }
 
     private fun initSAM() {
@@ -173,22 +179,21 @@ class Gear360Service : Service() {
     }
 
     private fun onSAMInitialised() {
-        updateConnectionState(ConnectionState.DISCONNECTED)
+        initBTMProviderService()
     }
 
-    private fun setupBTMProviderService() {
-        Log.d(TAG, "setupProviderService")
+    private fun initBTMProviderService() {
         val requestAgentCallback = object : SAAgentV2.RequestAgentCallback {
             override fun onAgentAvailable(agent: SAAgentV2) {
                 Log.d(TAG, "Agent available: $agent")
                 btmProviderService = agent as BTMProviderService
                 btmProviderService?.setup(btmStatusCallback)
-                btmProviderService?.findSaPeers()
+
+                btmProviderServiceInitialised()
             }
 
             override fun onError(errorCode: Int, message: String) {
                 Log.d(TAG, "requestAgentCallback onError $errorCode, $message")
-                updateConnectionState(ConnectionState.DISCONNECTED)
             }
         }
 
@@ -199,46 +204,18 @@ class Gear360Service : Service() {
         )
     }
 
+    private fun btmProviderServiceInitialised() {
+        updateConnectionState(ConnectionState.DISCONNECTED)
+    }
+
+    private fun connectBTMProviderService() {
+        btmProviderService?.findSaPeers()
+    }
+
     private fun onMessage(message: BTMessage2) {
         when (message) {
             is BTDateTimeRequest -> {
                 messageSender.sendDateTimeResponse()
-            }
-
-            is BTCameraConfigMessage -> {
-                updateGear360Config(
-                    Gear360Config(
-                        mode = CameraMode.fromString(message.mode),
-                        timer = TimerTime.fromString(message.timer),
-                        beep = BeepVolume.fromString(message.beep),
-                        led = LedIndicator.fromString(message.ledIndicator),
-                        autoPowerOffTime = AutoPowerOffTime.fromString(message.autoPowerOff),
-                        loopingVideoTime = LoopingVideoTime.fromString(message.loopingVideoTime),
-                    )
-                )
-            }
-
-            is BTCameraInfoMessage -> {
-                gear360Info = Gear360Info(
-                    message.modelName,
-                    message.modelVersion,
-                    message.channel,
-                    message.wifiDirectMac,
-                    message.softApSsid,
-                    message.softApPassword,
-                    message.boardRevision,
-                    message.serialNumber,
-                    message.uniqueNumber,
-                    message.wifiMac,
-                    message.bluetoothMac,
-                    message.btFotaTestUrl,
-                    message.firmwareType
-                )
-
-                Log.d(
-                    TAG,
-                    "Version: ${gear360Info?.getSemanticVersion()} -- ${gear360Info?.getVersionName()}"
-                )
             }
 
             is BTWidgetInfoRequest -> {
@@ -261,8 +238,40 @@ class Gear360Service : Service() {
                     )
                 )
 
-                val macAddress = WifiUtils.getMacAddress(applicationContext)
-                messageSender.sendPhoneInfo(macAddress)
+                messageSender.sendPhoneInfo(WifiUtils.getMacAddress(applicationContext))
+            }
+
+            is BTCameraInfoMessage -> {
+                gear360Info = Gear360Info(
+                    message.modelName,
+                    message.modelVersion,
+                    message.channel,
+                    message.wifiDirectMac,
+                    message.softApSsid,
+                    message.softApPassword,
+                    message.boardRevision,
+                    message.serialNumber,
+                    message.uniqueNumber,
+                    message.wifiMac,
+                    message.bluetoothMac,
+                    message.btFotaTestUrl,
+                    message.firmwareType
+                )
+            }
+
+            is BTCameraConfigMessage -> {
+                updateGear360Config(
+                    Gear360Config(
+                        mode = CameraMode.fromString(message.mode),
+                        timer = TimerTime.fromString(message.timer),
+                        beep = BeepVolume.fromString(message.beep),
+                        led = LedIndicator.fromString(message.ledIndicator),
+                        autoPowerOffTime = AutoPowerOffTime.fromString(message.autoPowerOff),
+                        loopingVideoTime = LoopingVideoTime.fromString(message.loopingVideoTime),
+                    )
+                )
+
+                updateConnectionState(ConnectionState.CONNECTED)
             }
 
             is BTRemoteShotResponse -> {
@@ -283,7 +292,7 @@ class Gear360Service : Service() {
     }
 
     private fun updateConnectionState(state: ConnectionState) {
-        Log.d(TAG, "Update connection state: $state")
+        Log.i(TAG, "Update connection state: $state")
         _connectionState.postValue(state)
     }
 
