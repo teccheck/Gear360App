@@ -77,3 +77,31 @@ enum class LedIndicator(val value: String) {
         }
     }
 }
+
+// This is not reverse engineered. The string values (except false) don' mean anything
+enum class CaptureState(val value: String) {
+    NONE("false"),
+    TIMER("timer"),
+    CAPTURING("capturing"),
+    RECORDING("recording");
+
+    companion object {
+        fun fromString(value: String): CaptureState? {
+            return entries.firstOrNull { it.value == value }
+        }
+    }
+}
+
+enum class CaptureCommand(val value: String) {
+    CAPTURE("capture"),
+    RECORD("record"),
+    RECORD_STOP("record stop"),
+    TIMER("timer"),
+    TIMER_STOP("timer stop");
+
+    companion object {
+        fun fromString(value: String): CaptureCommand? {
+            return entries.firstOrNull { it.value == value }
+        }
+    }
+}

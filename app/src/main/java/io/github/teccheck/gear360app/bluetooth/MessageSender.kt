@@ -5,6 +5,8 @@ import com.squareup.moshi.Moshi
 import io.github.teccheck.gear360app.service.AutoPowerOffTime
 import io.github.teccheck.gear360app.service.BeepVolume
 import io.github.teccheck.gear360app.service.CameraMode
+import io.github.teccheck.gear360app.service.CaptureCommand
+import io.github.teccheck.gear360app.service.CaptureState
 import io.github.teccheck.gear360app.service.Gear360Config
 import io.github.teccheck.gear360app.service.LedIndicator
 import io.github.teccheck.gear360app.service.LoopingVideoTime
@@ -67,30 +69,20 @@ class MessageSender(private val sender: Sender) {
         sendMessage(BTCommandRequest(BTCommandActionConfig(config)).asBtMessageContainer())
     }
 
-    fun sendShotRequest(isPhotoMode: Boolean, isRecording: Boolean) {
-        val mode = if (isPhotoMode)
-            "capture"
-        else if (!isRecording)
-            "record"
-        else
-            "record stop"
-
-        sendMessage(BTRemoteShotRequest(mode).asBtMessageContainer())
-    }
-
     fun sendCaptureRequest(cameraMode: CameraMode) {
         val command = when (cameraMode) {
-            CameraMode.PHOTO -> "capture"
-            else -> "record"
+            CameraMode.PHOTO -> CaptureCommand.CAPTURE
+            else -> CaptureCommand.RECORD
         }
 
         sendMessage(BTRemoteShotRequest(command).asBtMessageContainer())
     }
 
-    fun sendCaptureStopRequest(cameraMode: CameraMode, timerRunning: Boolean) {
-        val command = if (timerRunning) "timer stop" else when (cameraMode) {
-            CameraMode.PHOTO -> "capture stop"
-            else -> "record stop"
+    fun sendCaptureStopRequest(cameraMode: CameraMode, captureState: CaptureState) {
+        val command = when(captureState) {
+            CaptureState.NONE -> return
+            CaptureState.TIMER -> CaptureCommand.TIMER_STOP
+            else -> CaptureCommand.RECORD_STOP
         }
 
         sendMessage(BTRemoteShotRequest(command).asBtMessageContainer())

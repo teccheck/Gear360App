@@ -61,12 +61,12 @@ class StatusActivity : BaseActivity() {
             Property(
                 R.drawable.ic_baseline_videocam_24,
                 R.string.status_record_state,
-                status.recordState ?: "---"
+                status.recordState?.toString() ?: "---"
             ),
             Property(
                 R.drawable.ic_baseline_photo_camera_24,
                 R.string.status_capture_state,
-                status.captureState ?: "---"
+                status.captureState?.toString() ?: "---"
             ),
             Property(
                 R.drawable.ic_baseline_build_24,

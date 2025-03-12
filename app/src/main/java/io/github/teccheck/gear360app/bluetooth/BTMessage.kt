@@ -5,6 +5,8 @@ import com.squareup.moshi.JsonClass
 import io.github.teccheck.gear360app.service.AutoPowerOffTime
 import io.github.teccheck.gear360app.service.BeepVolume
 import io.github.teccheck.gear360app.service.CameraMode
+import io.github.teccheck.gear360app.service.CaptureCommand
+import io.github.teccheck.gear360app.service.CaptureState
 import io.github.teccheck.gear360app.service.Gear360Config
 import io.github.teccheck.gear360app.service.LedIndicator
 import io.github.teccheck.gear360app.service.LoopingVideoTime
@@ -301,8 +303,8 @@ class BTWidgetInfoResponse(
     val totalMemory: Int,
     val usedMemory: Int,
     val freeMemory: Int,
-    val recordState: String,
-    val captureState: String,
+    val recordState: CaptureState,
+    val captureState: CaptureState,
     val autoPowerOff: String,
     val recordableTime: Int,
     val capturableCount: Int,
@@ -329,8 +331,8 @@ class BTWidgetInfoResponse(
                 totalMemory,
                 usedMemory,
                 freeMemory,
-                recordState,
-                captureState,
+                CaptureState.fromString(recordState) ?: CaptureState.NONE,
+                CaptureState.fromString(captureState) ?: CaptureState.NONE,
                 autoPowerOff,
                 recordableTime,
                 capturableCount
@@ -473,11 +475,11 @@ class BTCameraConfigMessage(
     }
 }
 
-class BTRemoteShotRequest(val mode: String) : BTMessage2() {
+class BTRemoteShotRequest(val command: CaptureCommand) : BTMessage2() {
     fun asBtMessageContainer(): BTMessageContainer {
         return BTMessageContainer(
             properties = BTMessageProperties(
-                MsgId.SHOT_REQ, items = BTMessageProperty("string", mode)
+                MsgId.SHOT_REQ, items = BTMessageProperty("string", command.value)
             )
         )
     }
@@ -486,6 +488,7 @@ class BTRemoteShotRequest(val mode: String) : BTMessage2() {
 class BTRemoteShotResponse(
     val result: String,
     val resultCode: Int,
+    val description: String,
     val recordableTime: Int,
     val capturableCount: Int,
 ) : BTMessage2() {
@@ -494,6 +497,7 @@ class BTRemoteShotResponse(
             if (msg.properties.msgId != MsgId.SHOT_RSP) return null
 
             val result = msg.properties.result?.enum ?: return null
+            val description = msg.properties.result.description ?: return null
             val responseCode = msg.properties.resultCode?.description ?: return null
             val recordableTime =
                 msg.properties.extensionInfo?.recordableTime?.description ?: return null
@@ -501,7 +505,7 @@ class BTRemoteShotResponse(
                 msg.properties.extensionInfo.capturableCount?.description ?: return null
 
             return BTRemoteShotResponse(
-                result, responseCode, recordableTime, capturableCount
+                result, responseCode, description, recordableTime, capturableCount
             )
         }
     }

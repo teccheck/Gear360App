@@ -193,14 +193,16 @@ class Gear360Service : Service() {
     }
 
     fun requestCapture() {
+        if (connectionState.value != ConnectionState.CONNECTED) return
         val mode = gear360Config.value?.mode ?: return
         messageSender.sendCaptureRequest(mode)
     }
 
     fun requestCaptureStop() {
+        if (connectionState.value != ConnectionState.CONNECTED) return
         val mode = gear360Config.value?.mode ?: return
-        // TODO: Check if timer is running
-        messageSender.sendCaptureStopRequest(mode, true)
+        val captureState = gear360StatusLive.value?.captureState ?: return
+        messageSender.sendCaptureStopRequest(mode, captureState)
     }
 
     fun requestLiveView() {
@@ -323,10 +325,21 @@ class Gear360Service : Service() {
             }
 
             is BTRemoteShotResponse -> {
+                val captureState = when (CaptureCommand.fromString(message.description)) {
+                    CaptureCommand.CAPTURE -> CaptureState.NONE
+                    CaptureCommand.RECORD -> CaptureState.RECORDING
+                    CaptureCommand.RECORD_STOP -> CaptureState.NONE
+                    CaptureCommand.TIMER -> CaptureState.TIMER
+                    CaptureCommand.TIMER_STOP -> CaptureState.NONE
+                    null -> null
+                }
+
                 updateGear360Status(
                     Gear360Status(
                         capturableCount = message.capturableCount,
-                        recordableTime = message.recordableTime
+                        recordableTime = message.recordableTime,
+                        captureState = captureState,
+                        recordState = captureState,
                     )
                 )
             }
