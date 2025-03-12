@@ -4,10 +4,8 @@ import android.content.Intent
 import android.content.res.ColorStateList
 import android.os.*
 import android.util.Log
-import android.util.Property
 import android.widget.Button
 import android.widget.ImageView
-import android.widget.LinearLayout
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.github.teccheck.gear360app.R
@@ -15,7 +13,6 @@ import io.github.teccheck.gear360app.bluetooth.BTCommandResponse
 import io.github.teccheck.gear360app.bluetooth.BTDeviceDescriptionUrlMessage
 import io.github.teccheck.gear360app.bluetooth.BTMessage2
 import io.github.teccheck.gear360app.bluetooth.MessageHandler
-import io.github.teccheck.gear360app.bluetooth.MessageLog
 import io.github.teccheck.gear360app.service.ConnectionState
 import io.github.teccheck.gear360app.utils.SettingsHelper
 import io.github.teccheck.gear360app.utils.WifiUtils
@@ -76,7 +73,6 @@ class HomeActivity : BaseActivity() {
     }
 
     override fun onGearServiceConnected() {
-        gear360Service?.messageHandler?.addMessageListener(messageListener)
         setDeviceConnectivityIndicator(true)
     }
 
@@ -93,7 +89,7 @@ class HomeActivity : BaseActivity() {
                 R.string.btn_camera,
                 getString(R.string.btn_camera_description)
             ) {
-                gear360Service?.messageSender?.sendLiveViewRequest()
+                gear360Service?.requestLiveView()
             },
             Property(
                 R.drawable.ic_baseline_settings_remote_24,

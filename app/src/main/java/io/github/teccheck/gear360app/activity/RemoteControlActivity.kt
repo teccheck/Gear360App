@@ -25,6 +25,7 @@ class RemoteControlActivity : BaseActivity() {
     private var uiInitialised = false
 
     private lateinit var captureButton: MaterialButton
+    private lateinit var captureStopButton: MaterialButton
     private lateinit var settingsLayout: LinearLayout
     private lateinit var loopingVideoSettings: LinearLayout
     private lateinit var ledIndicatorSwitch: SwitchCompat
@@ -46,6 +47,9 @@ class RemoteControlActivity : BaseActivity() {
 
         captureButton = findViewById(R.id.btn_capture)
         captureButton.setOnClickListener { onCaptureButtonPressed() }
+
+        captureStopButton = findViewById(R.id.btn_capture_stop)
+        captureStopButton.setOnClickListener { gear360Service?.requestCaptureStop() }
 
         val settingsTitle = findViewById<TextView>(R.id.camera_settings_title)
         settingsTitle.setOnClickListener { onSettingsTitleClicked() }
@@ -165,17 +169,12 @@ class RemoteControlActivity : BaseActivity() {
             else -> return
         }
 
-        Log.d(TAG, "Set mode to $mode")
-        gear360Service?.messageSender?.sendChangeMode(mode)
+        gear360Service?.setCameraMode(mode)
         setCameraMode(mode)
     }
 
     private fun onCaptureButtonPressed() {
-        gear360Service?.let {
-            val photoMode = it.gear360Config.value?.mode == CameraMode.PHOTO
-            val recording = it.gear360StatusLive.value?.isRecording() ?: false
-            it.messageSender.sendShotRequest(photoMode, recording)
-        }
+        gear360Service?.requestCapture()
     }
 
     private fun onSettingsTitleClicked() {
@@ -195,11 +194,11 @@ class RemoteControlActivity : BaseActivity() {
             else -> return
         }
 
-        gear360Service?.messageSender?.sendChangeLoopingVideoTime(time)
+        gear360Service?.setLoopingVideoTime(time)
     }
 
     private fun onLedSwitchChanged(checked: Boolean) {
-        gear360Service?.messageSender?.sendSetLedIndicators(if (checked) LedIndicator.LED_ON else LedIndicator.LED_OFF)
+        gear360Service?.setLedIndicators(checked)
     }
 
     private fun onTimerTimeSelected(buttonId: Int) {
@@ -211,7 +210,7 @@ class RemoteControlActivity : BaseActivity() {
             else -> return
         }
 
-        gear360Service?.messageSender?.sendChangeTimerTimer(time)
+        gear360Service?.setTimerTime(time)
     }
 
     private fun onBeepVolumeSelected(buttonId: Int) {
@@ -223,7 +222,7 @@ class RemoteControlActivity : BaseActivity() {
             else -> return
         }
 
-        gear360Service?.messageSender?.sendChangeBeepVolume(volume)
+        gear360Service?.setBeepVolume(volume)
     }
 
     private fun onPowerTimerSelected(buttonId: Int) {
@@ -235,7 +234,7 @@ class RemoteControlActivity : BaseActivity() {
             else -> return
         }
 
-        gear360Service?.messageSender?.sendChangePowerOffTime(time)
+        gear360Service?.setAutoPowerOffTime(time)
     }
 
     private fun setCameraMode(cameraMode: CameraMode) {

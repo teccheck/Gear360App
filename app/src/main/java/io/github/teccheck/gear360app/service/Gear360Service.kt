@@ -121,8 +121,8 @@ class Gear360Service : Service() {
     val gear360StatusLive: LiveData<Gear360Status> = _gear360StatusLive
 
     val messageLog = MessageLog()
-    val messageHandler = MessageHandler()
-    val messageSender = MessageSender { channelId, data ->
+    private val messageHandler = MessageHandler()
+    private val messageSender = MessageSender { channelId, data ->
         btmProviderService?.send(channelId, data)
         messageLog.messageSent(data.toString(Charsets.UTF_8))
     }
@@ -161,8 +161,56 @@ class Gear360Service : Service() {
         onDisconnect()
     }
 
+    fun setCameraMode(mode: CameraMode) {
+        if (connectionState.value != ConnectionState.CONNECTED) return
+        messageSender.sendChangeMode(mode)
+    }
+
+    fun setLoopingVideoTime(time: LoopingVideoTime) {
+        if (connectionState.value != ConnectionState.CONNECTED) return
+        messageSender.sendChangeLoopingVideoTime(time)
+    }
+
+    fun setLedIndicators(active: Boolean) {
+        if (connectionState.value != ConnectionState.CONNECTED) return
+        val mode = if (active) LedIndicator.LED_ON else LedIndicator.LED_OFF
+        messageSender.sendSetLedIndicators(mode)
+    }
+
+    fun setTimerTime(time: TimerTime) {
+        if (connectionState.value != ConnectionState.CONNECTED) return
+        messageSender.sendChangeTimerTimer(time)
+    }
+
+    fun setBeepVolume(volume: BeepVolume) {
+        if (connectionState.value != ConnectionState.CONNECTED) return
+        messageSender.sendChangeBeepVolume(volume)
+    }
+
+    fun setAutoPowerOffTime(time: AutoPowerOffTime) {
+        if (connectionState.value != ConnectionState.CONNECTED) return
+        messageSender.sendChangePowerOffTime(time)
+    }
+
+    fun requestCapture() {
+        val mode = gear360Config.value?.mode ?: return
+        messageSender.sendCaptureRequest(mode)
+    }
+
+    fun requestCaptureStop() {
+        val mode = gear360Config.value?.mode ?: return
+        // TODO: Check if timer is running
+        messageSender.sendCaptureStopRequest(mode, true)
+    }
+
+    fun requestLiveView() {
+        if (connectionState.value != ConnectionState.CONNECTED) return
+        messageSender.sendLiveViewRequest()
+    }
+
     private fun onDisconnect() {
         connectedDeviceAddress = null
+        updateConnectionState(ConnectionState.DISCONNECTED)
     }
 
     private fun initSAM() {

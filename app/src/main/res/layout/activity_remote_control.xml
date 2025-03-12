@@ -127,6 +127,12 @@
             android:layout_marginTop="16dp"
             android:text="@string/btn_take_photo" />
 
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/btn_capture_stop"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/btn_capture_stop" />
+
         <TextView
             android:id="@+id/camera_settings_title"
             android:layout_width="match_parent"

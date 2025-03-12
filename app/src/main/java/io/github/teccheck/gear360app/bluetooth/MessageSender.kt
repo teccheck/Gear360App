@@ -20,7 +20,15 @@ class MessageSender(private val sender: Sender) {
         moshi.adapter(BTMessageContainer::class.java)
 
     fun sendPhoneInfo(wifiMac: String) {
-        sendMessage(BTPhoneInfoMessage(false, wifiMac, "test", "1.2.00.8", false).asBtMessageContainer())
+        sendMessage(
+            BTPhoneInfoMessage(
+                false,
+                wifiMac,
+                "test",
+                "1.2.00.8",
+                false
+            ).asBtMessageContainer()
+        )
     }
 
     fun sendWidgetInfoRequest() {
@@ -68,6 +76,24 @@ class MessageSender(private val sender: Sender) {
             "record stop"
 
         sendMessage(BTRemoteShotRequest(mode).asBtMessageContainer())
+    }
+
+    fun sendCaptureRequest(cameraMode: CameraMode) {
+        val command = when (cameraMode) {
+            CameraMode.PHOTO -> "capture"
+            else -> "record"
+        }
+
+        sendMessage(BTRemoteShotRequest(command).asBtMessageContainer())
+    }
+
+    fun sendCaptureStopRequest(cameraMode: CameraMode, timerRunning: Boolean) {
+        val command = if (timerRunning) "timer stop" else when (cameraMode) {
+            CameraMode.PHOTO -> "capture stop"
+            else -> "record stop"
+        }
+
+        sendMessage(BTRemoteShotRequest(command).asBtMessageContainer())
     }
 
     fun sendLiveViewRequest() {
