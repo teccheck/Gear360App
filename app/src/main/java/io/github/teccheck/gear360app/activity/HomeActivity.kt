@@ -4,14 +4,18 @@ import android.content.Intent
 import android.content.res.ColorStateList
 import android.os.*
 import android.util.Log
+import android.util.Property
 import android.widget.Button
 import android.widget.ImageView
 import android.widget.LinearLayout
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import io.github.teccheck.gear360app.R
 import io.github.teccheck.gear360app.bluetooth.BTCommandResponse
 import io.github.teccheck.gear360app.bluetooth.BTDeviceDescriptionUrlMessage
 import io.github.teccheck.gear360app.bluetooth.BTMessage2
 import io.github.teccheck.gear360app.bluetooth.MessageHandler
+import io.github.teccheck.gear360app.bluetooth.MessageLog
 import io.github.teccheck.gear360app.service.ConnectionState
 import io.github.teccheck.gear360app.utils.SettingsHelper
 import io.github.teccheck.gear360app.utils.WifiUtils
@@ -25,6 +29,7 @@ class HomeActivity : BaseActivity() {
     private lateinit var connectionDevice: ImageView
     private lateinit var connectionGear: ImageView
     private lateinit var connectButton: Button
+    private lateinit var recyclerView: RecyclerView
 
     private val messageListener = object : MessageHandler.MessageListener {
         override fun onMessageReceive(message: BTMessage2) {
@@ -47,6 +52,7 @@ class HomeActivity : BaseActivity() {
         connectionDevice = findViewById(R.id.connect_phone_image)
         connectionDots = findViewById(R.id.dots)
         connectionGear = findViewById(R.id.connect_camera_image)
+        recyclerView = findViewById(R.id.recycler)
 
         setDeviceConnectivityIndicator(false)
 
@@ -66,29 +72,7 @@ class HomeActivity : BaseActivity() {
             connect()
         }
 
-        findViewById<LinearLayout>(R.id.layout_camera).setOnClickListener {
-            gear360Service?.messageSender?.sendLiveViewRequest()
-        }
-
-        findViewById<LinearLayout>(R.id.layout_remote_control).setOnClickListener {
-            startActivity(Intent(this, RemoteControlActivity::class.java))
-        }
-
-        findViewById<LinearLayout>(R.id.layout_status).setOnClickListener {
-            startActivity(Intent(this, StatusActivity::class.java))
-        }
-
-        findViewById<LinearLayout>(R.id.layout_hardware).setOnClickListener {
-            startActivity(Intent(this, HardwareInfoActivity::class.java))
-        }
-
-        findViewById<LinearLayout>(R.id.layout_messages).setOnClickListener {
-            startActivity(Intent(this, MessagesActivity::class.java))
-        }
-
-        findViewById<LinearLayout>(R.id.layout_test).setOnClickListener {
-            startActivity(Intent(this, TestActivity::class.java))
-        }
+        startRecyclerView()
     }
 
     override fun onGearServiceConnected() {
@@ -99,6 +83,52 @@ class HomeActivity : BaseActivity() {
     override fun onConnectionStateChanged(state: ConnectionState) {
         setGearConnectivityIndicator(state)
         setDeviceConnectivityIndicator(state != ConnectionState.INVALID)
+    }
+
+
+    private fun startRecyclerView() {
+        val dataSet = arrayOf(
+            Property(
+                R.drawable.ic_gear_360_2016,
+                R.string.btn_camera,
+                getString(R.string.btn_camera_description)
+            ) {
+                gear360Service?.messageSender?.sendLiveViewRequest()
+            },
+            Property(
+                R.drawable.ic_baseline_settings_remote_24,
+                R.string.btn_remote_control,
+                getString(R.string.btn_remote_control_description),
+                ActivityAction(RemoteControlActivity::class.java)
+            ),
+            Property(
+                R.drawable.ic_baseline_settings_applications_24,
+                R.string.btn_status,
+                getString(R.string.btn_status_description),
+                ActivityAction(StatusActivity::class.java)
+            ),
+            Property(
+                R.drawable.ic_baseline_memory_24,
+                R.string.btn_hardware,
+                getString(R.string.btn_hardware_description),
+                ActivityAction(HardwareInfoActivity::class.java)
+            ),
+            Property(
+                R.drawable.baseline_chat_24,
+                R.string.btn_messages,
+                getString(R.string.btn_messages_description),
+                ActivityAction(MessagesActivity::class.java)
+            ),
+            Property(
+                R.drawable.ic_baseline_widgets_24,
+                R.string.btn_test,
+                getString(R.string.btn_test_description),
+                ActivityAction(TestActivity::class.java)
+            ),
+        )
+
+        recyclerView.layoutManager = LinearLayoutManager(this)
+        recyclerView.adapter = PropertiesRecyclerAdapter(dataSet)
     }
 
     private fun connect() {
@@ -144,15 +174,23 @@ class HomeActivity : BaseActivity() {
 
         connectionGear.imageTintList = ColorStateList.valueOf(color)
 
-        connectButton.isEnabled = when(connectionState) {
+        connectButton.isEnabled = when (connectionState) {
             ConnectionState.INVALID -> false
             ConnectionState.CONNECTING -> false
             else -> true
         }
 
-        connectButton.setText(when(connectionState) {
-            ConnectionState.CONNECTED -> R.string.btn_disconnect
-            else -> R.string.btn_connect
-        })
+        connectButton.setText(
+            when (connectionState) {
+                ConnectionState.CONNECTED -> R.string.btn_disconnect
+                else -> R.string.btn_connect
+            }
+        )
+    }
+
+    private inner class ActivityAction<T>(private val activity: Class<T>) : Action {
+        override fun execute() {
+            startActivity(Intent(this@HomeActivity, activity))
+        }
     }
 }

@@ -27,9 +27,18 @@ class PropertiesRecyclerAdapter(private val dataSet: Array<Property>) :
         view.findViewById<ImageView>(R.id.icon).setImageResource(property.iconResource)
         view.findViewById<TextView>(R.id.name).setText(property.nameResource)
         view.findViewById<TextView>(R.id.value).text = property.value
+
+        property.action?.let { action ->
+            view.setOnClickListener { action.execute() }
+            view.isClickable = true
+        }
     }
 
     override fun getItemCount() = dataSet.size
 }
 
-data class Property(val iconResource: Int, val nameResource: Int, val value: String)
+data class Property(val iconResource: Int, val nameResource: Int, val value: String, val action: Action? = null)
+
+fun interface Action {
+    fun execute()
+}
