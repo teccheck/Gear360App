@@ -311,7 +311,7 @@ class BTWidgetInfoResponse(
 ) : BTMessage2() {
     companion object {
         fun fromBTMessageContainer(msg: BTMessageContainer): BTWidgetInfoResponse? {
-            if (msg.properties.msgId != MsgId.WIDGET_INFO_RSP) return null
+            if (msg.properties.msgId != MsgId.WIDGET_INFO_RSP && msg.properties.msgId != MsgId.WIDGET_INFO_UPDATE) return null
             val list = msg.properties.list ?: return null
 
             val battery = list.items.battery?.description ?: return null
