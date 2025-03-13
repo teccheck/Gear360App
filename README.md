@@ -34,8 +34,28 @@ Contributions are always welcome on any part of the app.
 
 Currently, I'm rewriting/removing all the old Java code as I intend to replace it with cleaner Kotlin code. Some things are still written in Java though. For example the [`BTMProviderService`](app/src/main/java/io/github/teccheck/gear360app/bluetooth/BTMProviderService.java) is written in Java because Samsung Accessory Service can't handle this class being a Kotlin class.
 
-### Requirements
+## Requirements
 The app needs the [Samsung Accessory SDK](https://developer.samsung.com/galaxy-watch/develop/sdk) to work.
 
-### Important Note
+## Important Note
 Be sure to always have `[MAJOR].[MINOR]` version numbers in the [`accessoryservices.xml`](app/src/main/res/xml/accessoryservices.xml) file. Otherwise, Samsung Accessory Service **will** crash. It took me way too long to figure this out xD
+
+## About the tech
+I'd like to describe the tech that makes it all work. To me, it seems like the Gear 360 (and by that I mean both models) is a product that was rushed to market. As you can find on the internet, it shares the basic firmware with some NX series cameras. As well as that the app seems way too complicated and complex for what it does. There are classes with more than 10000 lines of code (at least in the decompilation), the packages are all over the place and don't get me started on the names they used.
+
+If you open the app, it tries to connect to the camera via Bluetooth and once connected, sends json encoded messages back and forth. These are used to get information, status and configuration from the camera as well as time and location from the phone. It can also be used to configure for example camera mode and command the camera to take a photo or record a video. These messages have a wierd format. It seems like they are adapted from another protocoll, but I'm not sure.
+
+```json
+{
+   "title": "Date-Time request Message",
+   "description": "Message structure in JSON for Date-Time request",
+   "type": "object",
+   "properties": {
+      "msgId": "date-time-req"
+   }
+},
+```
+
+This is one of the simplest messages. As you can see there are two human-readable strings, which is weird for a machine to machine interface. In general the format is much more complicated and inconsistent as it should be.
+
+More might follow here once I find the motivation to write...
