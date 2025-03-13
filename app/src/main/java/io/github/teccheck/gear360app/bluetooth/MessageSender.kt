@@ -1,5 +1,6 @@
 package io.github.teccheck.gear360app.bluetooth
 
+import android.location.Location
 import com.squareup.moshi.JsonAdapter
 import com.squareup.moshi.Moshi
 import io.github.teccheck.gear360app.service.AutoPowerOffTime
@@ -37,6 +38,10 @@ class MessageSender(private val sender: Sender) {
         sendMessage(BTWidgetInfoRequest().asBtMessageContainer())
     }
 
+    fun sendWidgetInfoResponse(location: Location?) {
+        sendMessage(BTWidgetInfoResponsePhone(location).asBtMessageContainer())
+    }
+
     fun sendDateTimeResponse() {
         sendMessage(BTDateTimeResponse(Date(System.currentTimeMillis())).asBtMessageContainer())
     }
@@ -66,7 +71,7 @@ class MessageSender(private val sender: Sender) {
     }
 
     private fun sendConfigChangeCommand(config: Gear360Config) {
-        sendMessage(BTCommandRequest(BTCommandActionConfig(config)).asBtMessageContainer())
+        sendMessage(BTCommandRequest(action = BTCommandActionConfig(config)).asBtMessageContainer())
     }
 
     fun sendCaptureRequest(cameraMode: CameraMode) {
@@ -89,7 +94,7 @@ class MessageSender(private val sender: Sender) {
     }
 
     fun sendLiveViewRequest() {
-        sendMessage(BTCommandRequest(BTCommandActionLiveView()).asBtMessageContainer())
+        sendMessage(BTCommandRequest(action = BTCommandActionLiveView()).asBtMessageContainer())
     }
 
     private fun sendMessage(message: BTMessageContainer) {

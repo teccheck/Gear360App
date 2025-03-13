@@ -1,5 +1,6 @@
 package io.github.teccheck.gear360app.bluetooth
 
+import android.location.Location
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import io.github.teccheck.gear360app.service.AutoPowerOffTime
@@ -13,6 +14,7 @@ import io.github.teccheck.gear360app.service.LoopingVideoTime
 import io.github.teccheck.gear360app.service.TimerTime
 import java.text.SimpleDateFormat
 import java.util.*
+
 
 // Because the messages used in bluetooth communication have a very weird format and don't follow
 // any good logic, this is quite messy and complicated. I tried my best to make the code
@@ -169,16 +171,17 @@ class BTMessageList(
 @JsonClass(generateAdapter = true)
 class BTMessageListItems(
     val result: BTMessageResult?,
-    val battery: BTMessageProperty<Int>?,
-    @Json(name = "battery-state") val batteryState: BTMessageProperty<String>?,
-    @Json(name = "total-memory") val totalMemory: BTMessageProperty<Int>?,
-    @Json(name = "used-memory") val usedMemory: BTMessageProperty<Int>?,
-    @Json(name = "free-memory") val freeMemory: BTMessageProperty<Int>?,
-    @Json(name = "record-state") val recordState: BTMessageProperty<String>?,
-    @Json(name = "capture-state") val captureState: BTMessageProperty<String>?,
-    @Json(name = "auto-poweroff") val autoPowerOff: BTMessageProperty<String>?,
-    @Json(name = "recordable-time") val recordableTime: BTMessageProperty<Int>?,
-    @Json(name = "capturable-count") val capturableCount: BTMessageProperty<Int>?,
+    val battery: BTMessageProperty<Int>? = null,
+    @Json(name = "battery-state") val batteryState: BTMessageProperty<String>? = null,
+    @Json(name = "total-memory") val totalMemory: BTMessageProperty<Int>? = null,
+    @Json(name = "used-memory") val usedMemory: BTMessageProperty<Int>? = null,
+    @Json(name = "free-memory") val freeMemory: BTMessageProperty<Int>? = null,
+    @Json(name = "record-state") val recordState: BTMessageProperty<String>? = null,
+    @Json(name = "capture-state") val captureState: BTMessageProperty<String>? = null,
+    @Json(name = "auto-poweroff") val autoPowerOff: BTMessageProperty<String>? = null,
+    @Json(name = "recordable-time") val recordableTime: BTMessageProperty<Int>? = null,
+    @Json(name = "capturable-count") val capturableCount: BTMessageProperty<Int>? = null,
+    val gps: BTMessageResult? = null,
 )
 
 @JsonClass(generateAdapter = true)
@@ -276,7 +279,7 @@ class BTDateTimeResponse(private val date: Date) : BTMessage2() {
 /**
  * Sent by both camera and phone. The camera sends this first and the phone responds with the same
  * message. Then the camera sends BTWidgetInfoResponse.
- * @see BTWidgetInfoResponse
+ * @see BTWidgetInfoResponseCamera
  */
 class BTWidgetInfoRequest() : BTMessage2() {
     fun asBtMessageContainer(): BTMessageContainer {
@@ -297,7 +300,7 @@ class BTWidgetInfoRequest() : BTMessage2() {
  * @param recordableTime how much can be recorded to the sdcard
  * @param capturableCount how many images can be captured on to the sdcard
  */
-class BTWidgetInfoResponse(
+class BTWidgetInfoResponseCamera(
     val battery: Int,
     val batteryState: String,
     val totalMemory: Int,
@@ -310,7 +313,7 @@ class BTWidgetInfoResponse(
     val capturableCount: Int,
 ) : BTMessage2() {
     companion object {
-        fun fromBTMessageContainer(msg: BTMessageContainer): BTWidgetInfoResponse? {
+        fun fromBTMessageContainer(msg: BTMessageContainer): BTWidgetInfoResponseCamera? {
             if (msg.properties.msgId != MsgId.WIDGET_INFO_RSP && msg.properties.msgId != MsgId.WIDGET_INFO_UPDATE) return null
             val list = msg.properties.list ?: return null
 
@@ -325,7 +328,7 @@ class BTWidgetInfoResponse(
             val recordableTime = list.items.recordableTime?.description ?: return null
             val capturableCount = list.items.capturableCount?.description ?: return null
 
-            return BTWidgetInfoResponse(
+            return BTWidgetInfoResponseCamera(
                 battery,
                 batteryState,
                 totalMemory,
@@ -338,6 +341,54 @@ class BTWidgetInfoResponse(
                 capturableCount
             )
         }
+    }
+}
+
+class BTWidgetInfoResponsePhone(
+    val location: Location?,
+) : BTMessage2() {
+    fun asBtMessageContainer(): BTMessageContainer {
+        var locationString = "UNKNOWN"
+        var locationEnum = "off"
+
+        location?.let {
+            var latData = location.latitude * 3600.0
+            var longData = location.longitude * 3600.0
+
+            var strNorS = "N"
+            if (latData < 0) {
+                strNorS = "S"
+                latData *= -1
+            }
+
+            var strEorW = "E"
+            if (longData < 0) {
+                strEorW = "W"
+                longData *= -1
+            }
+            // THIS WORKS BUT IS NOT PRECISE
+            //val strLati = latData.toString().split('.')[0]
+            //val strLongi = longData.toString().split('.')[0]
+
+            val strLati = String.format(Locale.ENGLISH, "%06d", latData.toInt())
+            val strLongi = String.format(Locale.ENGLISH, "%06d", longData.toInt())
+
+            locationString = strNorS + strLati + "X" + strEorW + strLongi
+            locationEnum = "on"
+        }
+
+        return BTMessageContainer(
+            properties = BTMessageProperties(
+                MsgId.WIDGET_INFO_RSP,
+                list = BTMessageList(
+                    "array",
+                    BTMessageListItems(
+                        result = BTMessageResult("success", "100"),
+                        gps = BTMessageResult(locationEnum, locationString),
+                    )
+                )
+            )
+        )
     }
 }
 
@@ -512,6 +563,7 @@ class BTRemoteShotResponse(
 }
 
 class BTCommandRequest(
+    val msgId: MsgId = MsgId.COMMAND_REQ,
     val action: BTCommandAction
 ) : BTMessage2() {
     fun asBtMessageContainer(): BTMessageContainer {
@@ -537,8 +589,10 @@ class BTCommandRequest(
         }
 
         return BTMessageContainer(
+            title = "Command request Message",
+            description = "Message structure in JSON for Command request",
             properties = BTMessageProperties(
-                MsgId.COMMAND_REQ, action = BTMessageAction(action.enum, action.description, items)
+                msgId, action = BTMessageAction(action.enum, action.description, items)
             )
         )
     }
@@ -568,7 +622,7 @@ class BTCommandRequest(
                 else -> null
             }
 
-            return BTCommandRequest(action ?: return null)
+            return BTCommandRequest(action = action ?: return null)
         }
     }
 }
@@ -602,7 +656,7 @@ class BTCommandResponse(
     }
 }
 
-abstract class BTCommandAction(
+open class BTCommandAction(
     val enum: String = "execute", val description: String
 )
 

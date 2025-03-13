@@ -2,8 +2,12 @@ package io.github.teccheck.gear360app.service
 
 import android.app.Service
 import android.content.Intent
+import android.location.Criteria
+import android.location.Location
+import android.location.LocationManager
 import android.os.*
 import android.util.Log
+import androidx.core.content.getSystemService
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import com.samsung.android.sdk.accessory.SAAgentV2
@@ -18,7 +22,7 @@ import io.github.teccheck.gear360app.bluetooth.BTMProviderService
 import io.github.teccheck.gear360app.bluetooth.BTMessage2
 import io.github.teccheck.gear360app.bluetooth.BTRemoteShotResponse
 import io.github.teccheck.gear360app.bluetooth.BTWidgetInfoRequest
-import io.github.teccheck.gear360app.bluetooth.BTWidgetInfoResponse
+import io.github.teccheck.gear360app.bluetooth.BTWidgetInfoResponseCamera
 import io.github.teccheck.gear360app.bluetooth.MessageHandler
 import io.github.teccheck.gear360app.bluetooth.MessageLog
 import io.github.teccheck.gear360app.bluetooth.MessageSender
@@ -32,6 +36,7 @@ private const val SA_TRANSPORT_TYPE = SamAccessoryManager.TRANSPORT_BT
 // - report connections status
 // - get static camera info on connect
 // - periodically get camera status
+// - send location data
 // Optional things this should do
 // - browse/download media
 // - handle live viewing
@@ -39,7 +44,8 @@ private const val SA_TRANSPORT_TYPE = SamAccessoryManager.TRANSPORT_BT
 // Messages to be exchanged on connection
 // CAMERA: Datetime request
 // PHONE:  Datetime response
-// CAMERA: Widget info request (not sure why this is sent by both devices)
+// CAMERA: Widget info request
+// PHONE:  Widget info response (with GPS data)
 // PHONE:  Widget info request
 // CAMERA: Widget info response
 // PHONE:  Phone device info
@@ -269,10 +275,23 @@ class Gear360Service : Service() {
             }
 
             is BTWidgetInfoRequest -> {
+                val service = getSystemService<LocationManager>()
+                val provider = service?.getBestProvider(Criteria(), true)
+                var location: Location? = null
+
+                try {
+                    provider?.let {
+                        location = service.getLastKnownLocation(it)
+                    }
+                } catch (e: SecurityException) {
+                    Log.e(TAG, e.message, e)
+                }
+
+                messageSender.sendWidgetInfoResponse(location)
                 messageSender.sendWidgetInfoRequest()
             }
 
-            is BTWidgetInfoResponse -> {
+            is BTWidgetInfoResponseCamera -> {
                 updateGear360Status(
                     Gear360Status(
                         message.battery,

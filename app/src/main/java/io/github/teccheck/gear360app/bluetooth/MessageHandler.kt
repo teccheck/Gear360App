@@ -34,7 +34,7 @@ class MessageHandler {
                     handleMessage(BTWidgetInfoRequest())
                 }
                 MsgId.WIDGET_INFO_RSP -> {
-                    handleMessage(BTWidgetInfoResponse.fromBTMessageContainer(message))
+                    handleMessage(BTWidgetInfoResponseCamera.fromBTMessageContainer(message))
                 }
                 MsgId.SHOT_RSP -> {
                     handleMessage(BTRemoteShotResponse.fromBTMessageContainer(message))
