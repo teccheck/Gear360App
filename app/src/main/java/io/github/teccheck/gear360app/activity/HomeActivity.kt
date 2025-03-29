@@ -15,6 +15,7 @@ import io.github.teccheck.gear360app.bluetooth.BTMessage2
 import io.github.teccheck.gear360app.bluetooth.MessageHandler
 import io.github.teccheck.gear360app.service.ConnectionState
 import io.github.teccheck.gear360app.utils.DeviceDescription
+import io.github.teccheck.gear360app.utils.ResUtils
 import io.github.teccheck.gear360app.utils.SettingsHelper
 import io.github.teccheck.gear360app.utils.WifiUtils
 import io.github.teccheck.gear360app.widget.ConnectionDots
@@ -68,6 +69,8 @@ class HomeActivity : BaseActivity() {
             connect()
         }
 
+        selectedDevice?.type?.let { connectionGear.setImageResource(ResUtils.getConnectModelIcon(it)) }
+
         startRecyclerView()
     }
 
@@ -83,7 +86,7 @@ class HomeActivity : BaseActivity() {
     private fun startRecyclerView() {
         val dataSet = arrayOf(
             Property(
-                R.drawable.ic_gear_360_2016,
+                ResUtils.getModelIcon(selectedDevice!!.type),
                 R.string.btn_camera,
                 getString(R.string.btn_camera_description)
             ) {
