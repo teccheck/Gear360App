@@ -105,3 +105,14 @@ enum class CaptureCommand(val value: String) {
         }
     }
 }
+
+enum class DeviceType(val value: String) {
+    C200("SM-C200"),
+    R210("SM-R210");
+
+    companion object {
+        fun fromString(value: String): DeviceType? {
+            return entries.firstOrNull { it.value == value }
+        }
+    }
+}

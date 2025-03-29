@@ -44,7 +44,7 @@ class HardwareInfoActivity : BaseActivity() {
             Property(
                 modelNameIcon,
                 R.string.hardware_model_name,
-                info.modelName
+                info.modelName.value
             ),
             Property(
                 R.drawable.ic_baseline_memory_24,

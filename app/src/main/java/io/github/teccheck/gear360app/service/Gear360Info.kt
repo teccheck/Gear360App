@@ -1,7 +1,7 @@
 package io.github.teccheck.gear360app.service
 
 data class Gear360Info(
-    val modelName: String,
+    val modelName: DeviceType,
     val modelVersion: String,
     val channel: Int,
     val wifiDirectMac: String,
@@ -15,8 +15,8 @@ data class Gear360Info(
     val btFotaTestUrl: String,
     val fwType: Int
 ) {
-    fun isCM200() = modelName.equals("SM-C200", true)
-    fun isR210() = modelName.equals("SM-R210", true)
+    fun isCM200() = modelName == DeviceType.C200
+    fun isR210() = modelName == DeviceType.R210
 
     fun getVersionName() = modelVersion.replaceAfter('_', "").replace("_", "")
 

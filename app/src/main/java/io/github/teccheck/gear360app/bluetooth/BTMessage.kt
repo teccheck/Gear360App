@@ -8,6 +8,7 @@ import io.github.teccheck.gear360app.service.BeepVolume
 import io.github.teccheck.gear360app.service.CameraMode
 import io.github.teccheck.gear360app.service.CaptureCommand
 import io.github.teccheck.gear360app.service.CaptureState
+import io.github.teccheck.gear360app.service.DeviceType
 import io.github.teccheck.gear360app.service.Gear360Config
 import io.github.teccheck.gear360app.service.LedIndicator
 import io.github.teccheck.gear360app.service.LoopingVideoTime
@@ -443,7 +444,7 @@ class BTPhoneInfoMessage(
  * @param firmwareType the type of firmware on the camera (only ever encountered user)
  */
 class BTCameraInfoMessage(
-    val modelName: String,
+    val modelName: DeviceType,
     val modelVersion: String,
     val channel: Int,
     val wifiDirectMac: String,
@@ -461,7 +462,8 @@ class BTCameraInfoMessage(
         fun fromBTMessageContainer(msg: BTMessageContainer): BTCameraInfoMessage? {
             if (msg.properties.msgId != MsgId.DEVICE_INFO) return null
 
-            val modelName = msg.properties.modelName?.description ?: return null
+            val modelName = msg.properties.modelName?.description?.let { DeviceType.fromString(it) }
+                ?: return null
             val modelVersion = msg.properties.modelVersion?.description ?: return null
             val channel = msg.properties.channel?.description ?: return null
             val wifiDirectMac = msg.properties.wifiDirectMac?.description ?: return null
