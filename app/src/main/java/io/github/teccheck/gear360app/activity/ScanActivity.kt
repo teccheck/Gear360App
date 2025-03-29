@@ -28,6 +28,8 @@ class ScanActivity : BaseActivity() {
     private lateinit var bluetoothAdapter: BluetoothAdapter
     private lateinit var bluetoothLeScanner: BluetoothLeScanner
     private var scanning = false
+    // This is an ugly hack
+    private var lastDeviceName: String? = null
 
     private val leScanCallback: ScanCallback = object : ScanCallback() {
         override fun onScanResult(callbackType: Int, result: ScanResult) {
@@ -72,6 +74,7 @@ class ScanActivity : BaseActivity() {
         if (state == ConnectionState.CONNECTED) {
             val deviceDescription = DeviceDescription(
                 gear360Service?.gear360Info?.btMac ?: return,
+                lastDeviceName ?: return,
                 gear360Service?.gear360Info?.modelName ?: return
             )
 
@@ -96,6 +99,7 @@ class ScanActivity : BaseActivity() {
     }
 
     private fun onItemClick(index: Int, bluetoothDevice: BluetoothDevice) {
+        lastDeviceName = bluetoothDevice.name
         gear360Service?.connect(bluetoothDevice.address)
     }
 

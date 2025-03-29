@@ -45,6 +45,18 @@
                 app:tint="@color/connection_indicators_disconnected" />
         </LinearLayout>
 
+
+        <Button
+            android:id="@+id/btn_select_device"
+            style="@style/Widget.MaterialComponents.Button.TextButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="8dp"
+            android:padding="8dp"
+            android:text="Select"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent" />
+
         <Button
             android:id="@+id/btn_connect"
             style="@style/Widget.MaterialComponents.Button.TextButton"

@@ -28,6 +28,7 @@ class HomeActivity : BaseActivity() {
     private lateinit var connectionDevice: ImageView
     private lateinit var connectionGear: ImageView
     private lateinit var connectButton: Button
+    private lateinit var selectButton: Button
     private lateinit var recyclerView: RecyclerView
 
     private var selectedDevice: DeviceDescription? = null
@@ -67,6 +68,12 @@ class HomeActivity : BaseActivity() {
         connectButton = findViewById(R.id.btn_connect)
         connectButton.setOnClickListener {
             connect()
+        }
+
+        selectButton = findViewById(R.id.btn_select_device)
+        selectButton.text = selectedDevice?.name
+        selectButton.setOnClickListener {
+
         }
 
         selectedDevice?.type?.let { connectionGear.setImageResource(ResUtils.getConnectModelIcon(it)) }
