@@ -14,12 +14,13 @@ import io.github.teccheck.gear360app.bluetooth.BTDeviceDescriptionUrlMessage
 import io.github.teccheck.gear360app.bluetooth.BTMessage2
 import io.github.teccheck.gear360app.bluetooth.MessageHandler
 import io.github.teccheck.gear360app.service.ConnectionState
+import io.github.teccheck.gear360app.utils.DeviceDescription
 import io.github.teccheck.gear360app.utils.SettingsHelper
 import io.github.teccheck.gear360app.utils.WifiUtils
 import io.github.teccheck.gear360app.widget.ConnectionDots
 
 private const val TAG = "HomeActivity"
-const val EXTRA_MAC_ADDRESS = "mac_address"
+const val EXTRA_DEVICE_DESCRIPTION = "device_description"
 
 class HomeActivity : BaseActivity() {
     private lateinit var connectionDots: ConnectionDots
@@ -27,6 +28,8 @@ class HomeActivity : BaseActivity() {
     private lateinit var connectionGear: ImageView
     private lateinit var connectButton: Button
     private lateinit var recyclerView: RecyclerView
+
+    private var selectedDevice: DeviceDescription? = null
 
     private val messageListener = object : MessageHandler.MessageListener {
         override fun onMessageReceive(message: BTMessage2) {
@@ -53,14 +56,10 @@ class HomeActivity : BaseActivity() {
 
         setDeviceConnectivityIndicator(false)
 
+        selectedDevice = intent.getSerializableExtra(EXTRA_DEVICE_DESCRIPTION) as DeviceDescription?
         val settings = SettingsHelper(this)
-        val editor = settings.edit()
-
-        val mac = intent.getStringExtra(EXTRA_MAC_ADDRESS)
-        mac?.let {
-            editor.setLastConnectedDeviceAddress(it)
-            editor.save()
-        }
+        if (selectedDevice == null)
+            selectedDevice = settings.getLastConnectedDevice()
 
         startGear360Service()
 
@@ -80,7 +79,6 @@ class HomeActivity : BaseActivity() {
         setGearConnectivityIndicator(state)
         setDeviceConnectivityIndicator(state != ConnectionState.INVALID)
     }
-
 
     private fun startRecyclerView() {
         val dataSet = arrayOf(
@@ -133,9 +131,9 @@ class HomeActivity : BaseActivity() {
             return
         }
 
-        intent.getStringExtra(EXTRA_MAC_ADDRESS)?.let {
+        selectedDevice?.let {
             Log.d(TAG, "Connect to $it")
-            gear360Service?.connect(it)
+            gear360Service?.connect(it.address)
         }
     }
 

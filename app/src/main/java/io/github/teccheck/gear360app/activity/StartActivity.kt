@@ -40,12 +40,12 @@ class StartActivity : AppCompatActivity() {
 
     private fun startNextActivity() {
         val settings = SettingsHelper(this)
-        val lastConnectedDevice = settings.getLastConnectedDeviceAddress()
+        val lastConnectedDevice = settings.getLastConnectedDevice()
 
         if (lastConnectedDevice != null) {
             val intent = Intent(this, HomeActivity::class.java)
             intent.flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
-            intent.putExtra(EXTRA_MAC_ADDRESS, lastConnectedDevice)
+            intent.putExtra(EXTRA_DEVICE_DESCRIPTION, lastConnectedDevice)
             startActivity(intent)
         } else {
             val intent = Intent(this, ScanActivity::class.java)
