@@ -39,6 +39,7 @@ dependencies {
     implementation 'com.google.android.exoplayer:exoplayer-ui:2.19.1'
 
     implementation 'com.squareup.moshi:moshi-kotlin:1.15.2'
+    implementation 'androidx.activity:activity:1.10.1'
     ksp 'com.squareup.moshi:moshi-kotlin-codegen:1.15.2'
 
     implementation files('sdk/sdk-v1.0.0.jar')

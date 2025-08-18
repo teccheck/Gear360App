@@ -17,6 +17,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.chip.Chip
 import io.github.teccheck.gear360app.R
 import io.github.teccheck.gear360app.service.ConnectionState
+import io.github.teccheck.gear360app.service.DeviceType
 import io.github.teccheck.gear360app.utils.DeviceDescription
 import io.github.teccheck.gear360app.utils.SettingsHelper
 
@@ -100,7 +101,7 @@ class ScanActivity : BaseActivity() {
 
     private fun onItemClick(index: Int, bluetoothDevice: BluetoothDevice) {
         lastDeviceName = bluetoothDevice.name
-        gear360Service?.connect(bluetoothDevice.address)
+        gear360Service?.connect(DeviceDescription(bluetoothDevice.address, "", DeviceType.C200))
     }
 
     inner class BtDeviceAdapter : RecyclerView.Adapter<RecyclerView.ViewHolder>() {

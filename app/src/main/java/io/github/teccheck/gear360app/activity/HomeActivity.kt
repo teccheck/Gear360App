@@ -9,15 +9,10 @@ import android.widget.ImageView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.github.teccheck.gear360app.R
-import io.github.teccheck.gear360app.bluetooth.BTCommandResponse
-import io.github.teccheck.gear360app.bluetooth.BTDeviceDescriptionUrlMessage
-import io.github.teccheck.gear360app.bluetooth.BTMessage2
-import io.github.teccheck.gear360app.bluetooth.MessageHandler
 import io.github.teccheck.gear360app.service.ConnectionState
 import io.github.teccheck.gear360app.utils.DeviceDescription
 import io.github.teccheck.gear360app.utils.ResUtils
 import io.github.teccheck.gear360app.utils.SettingsHelper
-import io.github.teccheck.gear360app.utils.WifiUtils
 import io.github.teccheck.gear360app.widget.ConnectionDots
 
 private const val TAG = "HomeActivity"
@@ -32,20 +27,6 @@ class HomeActivity : BaseActivity() {
     private lateinit var recyclerView: RecyclerView
 
     private var selectedDevice: DeviceDescription? = null
-
-    private val messageListener = object : MessageHandler.MessageListener {
-        override fun onMessageReceive(message: BTMessage2) {
-            if (message is BTCommandResponse) {
-                if (message.isSuccess() && message.resultDescription == "liveview") {
-                    val ssid = gear360Service?.gear360Info?.apSSID ?: return
-                    val password = gear360Service?.gear360Info?.apPassword ?: return
-                    WifiUtils.connectToWifi(this@HomeActivity, ssid, password, true)
-                }
-            } else if (message is BTDeviceDescriptionUrlMessage) {
-                startActivity(Intent(this@HomeActivity, ExoplayerActivity::class.java))
-            }
-        }
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -63,22 +44,19 @@ class HomeActivity : BaseActivity() {
         if (selectedDevice == null)
             selectedDevice = settings.getLastConnectedDevice()
 
+        updateSelectedDevice(selectedDevice)
+
         startGear360Service()
 
         connectButton = findViewById(R.id.btn_connect)
-        connectButton.setOnClickListener {
-            connect()
-        }
-
-        selectButton = findViewById(R.id.btn_select_device)
-        selectButton.text = selectedDevice?.name
-        selectButton.setOnClickListener {
-
-        }
-
-        selectedDevice?.type?.let { connectionGear.setImageResource(ResUtils.getConnectModelIcon(it)) }
+        connectButton.setOnClickListener { connect() }
 
         startRecyclerView()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        updateSelectedDevice(gear360Service?.selectedDevice?.value)
     }
 
     override fun onGearServiceConnected() {
@@ -143,8 +121,24 @@ class HomeActivity : BaseActivity() {
 
         selectedDevice?.let {
             Log.d(TAG, "Connect to $it")
-            gear360Service?.connect(it.address)
+            gear360Service?.connect(it)
         }
+    }
+
+    private fun chooseDevice() {
+        startActivity(Intent(this, ConnectedDeviceActivity::class.java))
+    }
+
+    private fun updateSelectedDevice(device: DeviceDescription?) {
+        if (device == null) return
+
+        val settings = SettingsHelper(this)
+        settings.setLastConnectedDevice(device)
+
+        selectButton = findViewById(R.id.btn_select_device)
+        selectButton.text = device.name
+        selectButton.setOnClickListener { chooseDevice() }
+        connectionGear.setImageResource(ResUtils.getConnectModelIcon(device.type))
     }
 
     private fun setDeviceConnectivityIndicator(active: Boolean) {

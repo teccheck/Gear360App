@@ -26,6 +26,7 @@ import io.github.teccheck.gear360app.bluetooth.BTWidgetInfoResponseCamera
 import io.github.teccheck.gear360app.bluetooth.MessageHandler
 import io.github.teccheck.gear360app.bluetooth.MessageLog
 import io.github.teccheck.gear360app.bluetooth.MessageSender
+import io.github.teccheck.gear360app.utils.DeviceDescription
 import io.github.teccheck.gear360app.utils.WifiUtils
 
 private const val TAG = "Gear360Service"
@@ -65,13 +66,10 @@ private const val SA_TRANSPORT_TYPE = SamAccessoryManager.TRANSPORT_BT
 class Gear360Service : Service() {
     private val binder = LocalBinder()
 
-    private var connectedDeviceAddress: String? = null
-
     private var samAccessoryManager: SamAccessoryManager? = null
     private val samListener = object : SamAccessoryManager.AccessoryEventListener {
         override fun onAccessoryConnected(device: SamDevice) {
             Log.d(TAG, "onAccessoryConnected $device")
-            connectedDeviceAddress = device.address
             connectBTMProviderService()
         }
 
@@ -120,6 +118,9 @@ class Gear360Service : Service() {
     private val _connectionState = MutableLiveData<ConnectionState>(ConnectionState.INVALID)
     val connectionState: LiveData<ConnectionState> = _connectionState
 
+    private val _selectedDevice = MutableLiveData<DeviceDescription>()
+    val selectedDevice: LiveData<DeviceDescription> = _selectedDevice
+
     private val _gear360Config = MutableLiveData<Gear360Config>()
     val gear360Config: LiveData<Gear360Config> = _gear360Config
 
@@ -154,16 +155,18 @@ class Gear360Service : Service() {
         samAccessoryManager?.release()
     }
 
-    fun connect(address: String) {
-        Log.d(TAG, "connect $address")
+    fun connect(device: DeviceDescription) {
+        Log.d(TAG, "connect $device")
+        selectedDevice.value?.let { disconnect(it) }
         updateConnectionState(ConnectionState.CONNECTING)
-        samAccessoryManager?.connect(address, SA_TRANSPORT_TYPE)
+        updateSelectedDevice(device)
+        samAccessoryManager?.connect(device.address, SA_TRANSPORT_TYPE)
     }
 
-    fun disconnect(address: String? = connectedDeviceAddress) {
-        Log.d(TAG, "disconnect $address")
+    fun disconnect(device: DeviceDescription? = selectedDevice.value) {
+        Log.d(TAG, "disconnect $device")
         updateConnectionState(ConnectionState.DISCONNECTED)
-        samAccessoryManager?.disconnect(address ?: return, SA_TRANSPORT_TYPE)
+        samAccessoryManager?.disconnect(device?.address ?: return, SA_TRANSPORT_TYPE)
         onDisconnect()
     }
 
@@ -217,7 +220,7 @@ class Gear360Service : Service() {
     }
 
     private fun onDisconnect() {
-        connectedDeviceAddress = null
+        updateSelectedDevice(null)
         updateConnectionState(ConnectionState.DISCONNECTED)
     }
 
@@ -374,6 +377,11 @@ class Gear360Service : Service() {
     private fun updateConnectionState(state: ConnectionState) {
         Log.i(TAG, "Update connection state: $state")
         _connectionState.postValue(state)
+    }
+
+    private fun updateSelectedDevice(device: DeviceDescription?) {
+        Log.i(TAG, "Update selected device: $device")
+        _selectedDevice.postValue(device)
     }
 
     private fun updateGear360Config(config: Gear360Config) {
