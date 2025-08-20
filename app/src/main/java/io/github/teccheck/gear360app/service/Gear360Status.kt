@@ -2,7 +2,7 @@ package io.github.teccheck.gear360app.service
 
 data class Gear360Status(
     val battery: Int? = null,
-    val batteryState: String? = null,
+    val batteryState: BatteryState? = null,
     val totalMemory: Int? = null,
     val usedMemory: Int? = null,
     val freeMemory: Int? = null,
@@ -14,7 +14,7 @@ data class Gear360Status(
 ) {
     fun modify(
         battery: Int? = null,
-        batteryState: String? = null,
+        batteryState: BatteryState? = null,
         totalMemory: Int? = null,
         usedMemory: Int? = null,
         freeMemory: Int? = null,

@@ -14,12 +14,73 @@
         android:orientation="vertical"
         android:padding="16dp">
 
-        <LinearLayout
+
+        <androidx.constraintlayout.widget.ConstraintLayout
+            android:id="@+id/camera_status_layout"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:orientation="horizontal">
+            android:layout_marginBottom="16dp">
 
-            <com.google.android.material.button.MaterialButtonToggleGroup
+            <ImageView
+                android:id="@+id/status_icon_left"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/ic_baseline_photo_camera_24" />
+
+            <TextView
+                android:id="@+id/status_value_left"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="4dp"
+                android:textColor="?android:attr/textColorPrimary"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintStart_toEndOf="@+id/status_icon_left"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="9999" />
+
+            <TextView
+                android:id="@+id/status_value_center"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="64dp"
+                android:layout_marginEnd="64dp"
+                android:gravity="center"
+                android:paddingStart="8dp"
+                android:paddingEnd="8dp"
+                android:textColor="?android:attr/textColorPrimary"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="Gear 360 (FFFF)" />
+
+            <TextView
+                android:id="@+id/status_value_right"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginEnd="4dp"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"
+                android:textColor="?android:attr/textColorPrimary"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toStartOf="@+id/status_icon_right"
+                app:layout_constraintTop_toTopOf="parent"
+                tools:text="100%" />
+
+            <ImageView
+                android:id="@+id/status_icon_right"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:layout_constraintBottom_toBottomOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintTop_toTopOf="parent"
+                app:srcCompat="@drawable/battery_high" />
+        </androidx.constraintlayout.widget.ConstraintLayout>
+
+        <com.google.android.material.button.MaterialButtonToggleGroup
                 android:id="@+id/mode_toggle"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -62,8 +123,6 @@
                     android:contentDescription="@string/mode_time_lapse"
                     app:icon="@drawable/ic_time_lapse" />
             </com.google.android.material.button.MaterialButtonToggleGroup>
-
-        </LinearLayout>
 
         <LinearLayout
             android:id="@+id/looping_video_settings"

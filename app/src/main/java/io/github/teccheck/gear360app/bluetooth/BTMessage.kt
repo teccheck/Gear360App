@@ -4,6 +4,7 @@ import android.location.Location
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
 import io.github.teccheck.gear360app.service.AutoPowerOffTime
+import io.github.teccheck.gear360app.service.BatteryState
 import io.github.teccheck.gear360app.service.BeepVolume
 import io.github.teccheck.gear360app.service.CameraMode
 import io.github.teccheck.gear360app.service.CaptureCommand
@@ -303,7 +304,7 @@ class BTWidgetInfoRequest() : BTMessage2() {
  */
 class BTWidgetInfoResponseCamera(
     val battery: Int,
-    val batteryState: String,
+    val batteryState: BatteryState,
     val totalMemory: Int,
     val usedMemory: Int,
     val freeMemory: Int,
@@ -331,7 +332,7 @@ class BTWidgetInfoResponseCamera(
 
             return BTWidgetInfoResponseCamera(
                 battery,
-                batteryState,
+                BatteryState.fromString(batteryState) ?: BatteryState.NO_CHARGE,
                 totalMemory,
                 usedMemory,
                 freeMemory,

@@ -3,6 +3,7 @@ package io.github.teccheck.gear360app.activity
 import android.os.Bundle
 import android.util.Log
 import android.view.View
+import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.TextView
 import androidx.annotation.IdRes
@@ -11,12 +12,13 @@ import com.google.android.material.button.MaterialButton
 import com.google.android.material.button.MaterialButtonToggleGroup
 import io.github.teccheck.gear360app.R
 import io.github.teccheck.gear360app.service.AutoPowerOffTime
+import io.github.teccheck.gear360app.service.BatteryState
 import io.github.teccheck.gear360app.service.BeepVolume
 import io.github.teccheck.gear360app.service.CameraMode
-import io.github.teccheck.gear360app.service.Gear360Config
 import io.github.teccheck.gear360app.service.LedIndicator
 import io.github.teccheck.gear360app.service.LoopingVideoTime
 import io.github.teccheck.gear360app.service.TimerTime
+import io.github.teccheck.gear360app.utils.ResUtils
 
 private const val TAG = "RemoteControlActivity"
 
@@ -36,6 +38,12 @@ class RemoteControlActivity : BaseActivity() {
     private lateinit var beepToggle: MaterialButtonToggleGroup
     private lateinit var powerToggle: MaterialButtonToggleGroup
 
+    private lateinit var statusIconLeft: ImageView
+    private lateinit var statusValueLeft: TextView
+    private lateinit var statusValueCenter: TextView
+    private lateinit var statusValueRight: TextView
+    private lateinit var statusIconRight: ImageView
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_remote_control)
@@ -44,6 +52,12 @@ class RemoteControlActivity : BaseActivity() {
 
         loopingVideoSettings = findViewById(R.id.looping_video_settings)
         settingsLayout = findViewById(R.id.camera_settings)
+
+        statusIconLeft = findViewById(R.id.status_icon_left)
+        statusValueLeft = findViewById(R.id.status_value_left)
+        statusValueCenter = findViewById(R.id.status_value_center)
+        statusValueRight = findViewById(R.id.status_value_right)
+        statusIconRight = findViewById(R.id.status_icon_right)
 
         captureButton = findViewById(R.id.btn_capture)
         captureButton.setOnClickListener { onCaptureButtonPressed() }
@@ -89,12 +103,35 @@ class RemoteControlActivity : BaseActivity() {
 
     override fun onGearServiceConnected() {
         gear360Service?.gear360Config?.observe(this) {
-            setupUiValues(it)
+            setupConfigUI()
+            setupStatusUI()
         }
+        gear360Service?.gear360StatusLive?.observe(this) { setupStatusUI() }
     }
 
-    private fun setupUiValues(config: Gear360Config) {
+    private fun setupStatusUI() {
+        val status = gear360Service?.gear360StatusLive?.value ?: return
+        val config = gear360Service?.gear360Config?.value ?: return
+
+        when (config.mode) {
+            CameraMode.PHOTO -> {
+                statusIconLeft.setImageResource(R.drawable.baseline_image_24)
+                statusValueLeft.text = status.capturableCount.toString()
+            }
+
+            else -> {
+                statusIconLeft.setImageResource(R.drawable.baseline_movie_24)
+                statusValueLeft.text = status.recordableTime.toString()
+            }
+        }
+
+        statusValueRight.text = gear360Service?.selectedDevice?.value?.name ?: ""
+        statusIconRight.setImageResource(ResUtils.getBatteryIcon(status.battery ?: 0, status.batteryState ?: BatteryState.NO_CHARGE))
+    }
+
+    private fun setupConfigUI() {
         Log.d(TAG, "setupUiValues")
+        val config = gear360Service?.gear360Config?.value ?: return
 
         config.mode?.let { setCameraMode(it) }
 

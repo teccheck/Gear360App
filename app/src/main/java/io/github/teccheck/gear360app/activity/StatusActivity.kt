@@ -41,7 +41,7 @@ class StatusActivity : BaseActivity() {
             Property(
                 R.drawable.baseline_battery_std_24,
                 R.string.status_battery_state,
-                status.batteryState ?: "---"
+                status.batteryState.toString()
             ),
             Property(
                 R.drawable.ic_baseline_memory_24,

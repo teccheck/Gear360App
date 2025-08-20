@@ -116,3 +116,17 @@ enum class DeviceType(val value: String) {
         }
     }
 }
+
+enum class BatteryState(val value: String) {
+    NORMAL("normal"),
+    CHARGE("charge"),
+    NO_CHARGE("no-charge"),
+    ERROR_CF("error-cf"),
+    ERROR_TEMP("error-temp");
+
+    companion object {
+        fun fromString(value: String): BatteryState? {
+            return entries.firstOrNull { it.value == value }
+        }
+    }
+}
