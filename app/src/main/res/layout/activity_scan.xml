@@ -60,7 +60,8 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:visibility="gone">
+        android:visibility="gone"
+        tools:visibility="visible">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -88,7 +89,7 @@
                 android:layout_marginEnd="8dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="8dp"
-                app:srcCompat="@drawable/ic_gear_360_2016"
+                app:srcCompat="@drawable/ic_gear_360_2016_baseline"
                 app:tint="?attr/colorPrimary" />
 
             <ImageButton
@@ -97,7 +98,7 @@
                 android:layout_height="wrap_content"
                 android:background="?attr/selectableItemBackgroundBorderless"
                 android:padding="8dp"
-                app:srcCompat="@drawable/ic_gear_360_2017" />
+                app:srcCompat="@drawable/ic_gear_360_2017_baseline" />
         </LinearLayout>
 
         <androidx.viewpager2.widget.ViewPager2

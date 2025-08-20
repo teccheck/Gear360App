@@ -4,11 +4,13 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
+import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.google.android.material.chip.Chip
 import io.github.teccheck.gear360app.R
 import io.github.teccheck.gear360app.utils.DeviceDescription
+import io.github.teccheck.gear360app.utils.ResUtils
 import io.github.teccheck.gear360app.utils.SettingsHelper
 
 class ConnectedDeviceActivity : BaseActivity() {
@@ -37,7 +39,7 @@ class ConnectedDeviceActivity : BaseActivity() {
     inner class BtDeviceAdapter(val devices: List<DeviceDescription>) : RecyclerView.Adapter<RecyclerView.ViewHolder>() {
 
         override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
-            val view = layoutInflater.inflate(R.layout.list_entry_device, parent, false)
+            val view = layoutInflater.inflate(R.layout.list_entry_hardware, parent, false)
             return ViewHolder(view)
         }
 
@@ -45,9 +47,15 @@ class ConnectedDeviceActivity : BaseActivity() {
             val view = holder.itemView
             val device = devices[position]
 
-            val chip = view.findViewById<Chip>(R.id.chip)
-            chip.setOnClickListener { this@ConnectedDeviceActivity.onItemClick(position, device) }
-            chip.text = device.name
+            val name = view.findViewById<TextView>(R.id.name)
+            val address = view.findViewById<TextView>(R.id.value)
+            val icon = view.findViewById<ImageView>(R.id.icon)
+
+            name.text = device.name
+            address.text = device.address
+            icon.setImageResource(ResUtils.getModelIcon(device.type))
+
+            view.setOnClickListener { this@ConnectedDeviceActivity.onItemClick(position, device) }
         }
 
         override fun getItemCount(): Int {

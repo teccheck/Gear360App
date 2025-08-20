@@ -33,8 +33,8 @@ class HardwareInfoActivity : BaseActivity() {
         Log.d(TAG, "startRecyclerView")
 
         val modelNameIcon =
-            if (info.isCM200()) R.drawable.ic_gear_360_2016
-            else R.drawable.ic_gear_360_2017
+            if (info.isCM200()) R.drawable.ic_gear_360_2016_baseline
+            else R.drawable.ic_gear_360_2017_baseline
 
         val fwTypeName =
             if (info.fwType == 0) getString(R.string.hardware_fw_type_user)

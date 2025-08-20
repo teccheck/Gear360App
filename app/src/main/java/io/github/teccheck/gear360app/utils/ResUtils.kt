@@ -8,8 +8,8 @@ import io.github.teccheck.gear360app.service.DeviceType
 object ResUtils {
     @DrawableRes
     fun getModelIcon(type: DeviceType) = when (type) {
-        DeviceType.C200 -> R.drawable.ic_gear_360_2016
-        DeviceType.R210 -> R.drawable.ic_gear_360_2017
+        DeviceType.C200 -> R.drawable.ic_gear_360_2016_baseline
+        DeviceType.R210 -> R.drawable.ic_gear_360_2017_baseline
     }
 
     @DrawableRes
