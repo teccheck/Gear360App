@@ -106,11 +106,11 @@ class RemoteControlActivity : BaseActivity() {
             setupConfigUI()
             setupStatusUI()
         }
-        gear360Service?.gear360StatusLive?.observe(this) { setupStatusUI() }
+        gear360Service?.gear360Status?.observe(this) { setupStatusUI() }
     }
 
     private fun setupStatusUI() {
-        val status = gear360Service?.gear360StatusLive?.value ?: return
+        val status = gear360Service?.gear360Status?.value ?: return
         val config = gear360Service?.gear360Config?.value ?: return
 
         when (config.mode) {

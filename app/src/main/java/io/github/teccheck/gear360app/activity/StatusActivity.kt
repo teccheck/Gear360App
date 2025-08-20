@@ -28,7 +28,7 @@ class StatusActivity : BaseActivity() {
 
     private fun startRecyclerView() {
         // TODO: Live update
-        val status = gear360Service?.gear360StatusLive?.value ?: return
+        val status = gear360Service?.gear360Status?.value ?: return
 
         Log.d(TAG, "startRecyclerView")
 

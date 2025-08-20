@@ -124,8 +124,8 @@ class Gear360Service : Service() {
     private val _gear360Config = MutableLiveData<Gear360Config>()
     val gear360Config: LiveData<Gear360Config> = _gear360Config
 
-    private val _gear360StatusLive = MutableLiveData<Gear360Status>()
-    val gear360StatusLive: LiveData<Gear360Status> = _gear360StatusLive
+    private val _gear360Status = MutableLiveData<Gear360Status>()
+    val gear360Status: LiveData<Gear360Status> = _gear360Status
 
     val messageLog = MessageLog()
     private val messageHandler = MessageHandler()
@@ -210,7 +210,7 @@ class Gear360Service : Service() {
     fun requestCaptureStop() {
         if (connectionState.value != ConnectionState.CONNECTED) return
         val mode = gear360Config.value?.mode ?: return
-        val captureState = gear360StatusLive.value?.captureState ?: return
+        val captureState = gear360Status.value?.captureState ?: return
         messageSender.sendCaptureStopRequest(mode, captureState)
     }
 
@@ -392,8 +392,8 @@ class Gear360Service : Service() {
 
     private fun updateGear360Status(status: Gear360Status) {
         Log.d(TAG, "Update status: $status")
-        val old = gear360StatusLive.value ?: Gear360Status()
-        _gear360StatusLive.postValue(old.merge(status))
+        val old = gear360Status.value ?: Gear360Status()
+        _gear360Status.postValue(old.merge(status))
     }
 
     override fun onBind(intent: Intent): IBinder {

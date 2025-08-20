@@ -33,7 +33,7 @@ class MessageHandler {
                 MsgId.WIDGET_INFO_REQ -> {
                     handleMessage(BTWidgetInfoRequest())
                 }
-                MsgId.WIDGET_INFO_RSP -> {
+                MsgId.WIDGET_INFO_RSP, MsgId.WIDGET_INFO_UPDATE -> {
                     handleMessage(BTWidgetInfoResponseCamera.fromBTMessageContainer(message))
                 }
                 MsgId.SHOT_RSP -> {
