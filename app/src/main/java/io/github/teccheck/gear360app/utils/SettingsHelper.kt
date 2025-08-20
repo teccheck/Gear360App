@@ -1,7 +1,9 @@
 package io.github.teccheck.gear360app.utils
 
+import android.bluetooth.BluetoothManager
 import android.content.Context
 import android.content.SharedPreferences
+import androidx.core.content.getSystemService
 import io.github.teccheck.gear360app.service.DeviceType
 
 private const val key_device_address = "last_connected_device"
@@ -33,6 +35,17 @@ class SettingsHelper(context: Context) {
     fun getPairedDevices(): List<DeviceDescription> {
         val pairedDevices = prefs.getStringSet(key_paired_devices, null) ?: return listOf()
         return pairedDevices.mapNotNull(this::getDeviceDescription).toList()
+    }
+
+    fun updateKnownDeviceNames(context: Context) {
+        val btAdapter = context.getSystemService<BluetoothManager>()?.adapter ?: return
+        getPairedDevices().map {
+            DeviceDescription(
+                it.address,
+                btAdapter.getRemoteDevice(it.address).alias ?: it.name,
+                it.type
+            )
+        }.forEach { addPairedDevice(it) }
     }
 
     private fun getDeviceDescription(address: String): DeviceDescription? {

@@ -45,6 +45,7 @@ class HomeActivity : BaseActivity() {
 
         selectedDevice = intent.getSerializableExtra(EXTRA_DEVICE_DESCRIPTION) as DeviceDescription?
         val settings = SettingsHelper(this)
+        settings.updateKnownDeviceNames(this)
         if (selectedDevice == null)
             selectedDevice = settings.getLastConnectedDevice()
 
