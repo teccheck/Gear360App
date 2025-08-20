@@ -1,10 +1,10 @@
 package io.github.teccheck.gear360app.activity
 
 import android.os.Bundle
-import android.util.Log
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.github.teccheck.gear360app.R
+import io.github.teccheck.gear360app.service.Gear360Status
 
 private const val TAG = "StatusActivity"
 
@@ -24,14 +24,10 @@ class StatusActivity : BaseActivity() {
 
     override fun onGearServiceConnected() {
         startRecyclerView()
+        gear360Service?.gear360Status?.observe(this, this::updateRecyclerView)
     }
 
-    private fun startRecyclerView() {
-        // TODO: Live update
-        val status = gear360Service?.gear360Status?.value ?: return
-
-        Log.d(TAG, "startRecyclerView")
-
+    private fun updateRecyclerView(status: Gear360Status) {
         val dataSet: Array<Property> = arrayOf(
             Property(
                 R.drawable.baseline_battery_std_24,
@@ -85,7 +81,11 @@ class StatusActivity : BaseActivity() {
             ),
         )
 
+        (recyclerView.adapter as PropertiesRecyclerAdapter).updateDataSet(dataSet)
+    }
+
+    private fun startRecyclerView() {
         recyclerView.layoutManager = LinearLayoutManager(this)
-        recyclerView.adapter = PropertiesRecyclerAdapter(dataSet)
+        recyclerView.adapter = PropertiesRecyclerAdapter(arrayOf())
     }
 }

@@ -8,7 +8,7 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import io.github.teccheck.gear360app.R
 
-class PropertiesRecyclerAdapter(private val dataSet: Array<Property>) :
+class PropertiesRecyclerAdapter(private var dataSet: Array<Property>) :
     RecyclerView.Adapter<PropertiesRecyclerAdapter.ViewHolder>() {
 
     class ViewHolder(view: View) : RecyclerView.ViewHolder(view)
@@ -35,6 +35,11 @@ class PropertiesRecyclerAdapter(private val dataSet: Array<Property>) :
     }
 
     override fun getItemCount() = dataSet.size
+
+    fun updateDataSet(dataSet: Array<Property>) {
+        this.dataSet = dataSet
+        notifyDataSetChanged()
+    }
 }
 
 data class Property(val iconResource: Int, val nameResource: Int, val value: String, val action: Action? = null)
