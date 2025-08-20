@@ -121,7 +121,7 @@ class RemoteControlActivity : BaseActivity() {
 
             else -> {
                 statusIconLeft.setImageResource(R.drawable.baseline_movie_24)
-                statusValueLeft.text = status.recordableTime.toString()
+                statusValueLeft.text = status.recordableTimeString()
             }
         }
 
