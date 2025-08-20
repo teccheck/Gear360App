@@ -40,19 +40,24 @@ class StatusActivity : BaseActivity() {
                 status.batteryState.toString()
             ),
             Property(
-                R.drawable.ic_baseline_memory_24,
+                R.drawable.ic_baseline_build_24,
+                R.string.status_auto_poweroff,
+                status.autoPowerOff ?: "---"
+            ),
+            Property(
+                R.drawable.baseline_sd_storage_24,
                 R.string.status_total_memory,
-                status.totalMemory.toString()
+                "${status.totalStorage}MiB"
             ),
             Property(
-                R.drawable.ic_baseline_memory_24,
+                R.drawable.baseline_sd_storage_24,
                 R.string.status_free_memory,
-                status.freeMemory.toString()
+                "${status.freeStorage}MiB"
             ),
             Property(
-                R.drawable.ic_baseline_memory_24,
+                R.drawable.baseline_sd_storage_24,
                 R.string.status_used_memory,
-                status.usedMemory.toString()
+                "${status.usedStorage}MiB"
             ),
             Property(
                 R.drawable.ic_baseline_videocam_24,
@@ -60,19 +65,14 @@ class StatusActivity : BaseActivity() {
                 status.recordState?.toString() ?: "---"
             ),
             Property(
+                R.drawable.ic_baseline_videocam_24,
+                R.string.status_recordable_time,
+                "${status.recordableTimeString()} (${status.recordableTime})"
+            ),
+            Property(
                 R.drawable.ic_baseline_photo_camera_24,
                 R.string.status_capture_state,
                 status.captureState?.toString() ?: "---"
-            ),
-            Property(
-                R.drawable.ic_baseline_build_24,
-                R.string.status_auto_poweroff,
-                status.autoPowerOff ?: "---"
-            ),
-            Property(
-                R.drawable.ic_baseline_videocam_24,
-                R.string.status_recordable_time,
-                status.recordableTime.toString()
             ),
             Property(
                 R.drawable.ic_baseline_photo_camera_24,

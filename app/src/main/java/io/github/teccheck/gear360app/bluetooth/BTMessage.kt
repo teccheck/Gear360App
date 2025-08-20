@@ -178,9 +178,9 @@ class BTMessageListItems(
     val result: BTMessageResult?,
     val battery: BTMessageProperty<Int>? = null,
     @Json(name = "battery-state") val batteryState: BTMessageProperty<String>? = null,
-    @Json(name = "total-memory") val totalMemory: BTMessageProperty<Int>? = null,
-    @Json(name = "used-memory") val usedMemory: BTMessageProperty<Int>? = null,
-    @Json(name = "free-memory") val freeMemory: BTMessageProperty<Int>? = null,
+    @Json(name = "total-memory") val totalStorage: BTMessageProperty<Int>? = null,
+    @Json(name = "used-memory") val usedStorage: BTMessageProperty<Int>? = null,
+    @Json(name = "free-memory") val freeStorage: BTMessageProperty<Int>? = null,
     @Json(name = "record-state") val recordState: BTMessageProperty<String>? = null,
     @Json(name = "capture-state") val captureState: BTMessageProperty<String>? = null,
     @Json(name = "auto-poweroff") val autoPowerOff: BTMessageProperty<String>? = null,
@@ -296,9 +296,9 @@ class BTWidgetInfoRequest() : BTMessage2() {
  * Sent by the camera. Contains current status information.
  * @param battery current battery level (0-3)
  * @param batteryState current battery state (normal, charging, ...)
- * @param totalMemory the total memory available to the camera
- * @param usedMemory the used memory
- * @param freeMemory the free memory
+ * @param totalStorage the total memory available to the camera
+ * @param usedStorage the used memory
+ * @param freeStorage the free memory
  * @param recordState whether the camera is recording or not
  * @param captureState whether the camera is capturing or not
  * @param autoPowerOff how long before the camera shuts of automatically
@@ -308,9 +308,9 @@ class BTWidgetInfoRequest() : BTMessage2() {
 class BTWidgetInfoResponseCamera(
     val battery: Int,
     val batteryState: BatteryState,
-    val totalMemory: Int,
-    val usedMemory: Int,
-    val freeMemory: Int,
+    val totalStorage: Int,
+    val usedStorage: Int,
+    val freeStorage: Int,
     val recordState: CaptureState,
     val captureState: CaptureState,
     val autoPowerOff: String,
@@ -324,9 +324,9 @@ class BTWidgetInfoResponseCamera(
 
             val battery = list.items.battery?.description ?: return null
             val batteryState = list.items.batteryState?.description ?: return null
-            val totalMemory = list.items.totalMemory?.description ?: return null
-            val usedMemory = list.items.usedMemory?.description ?: return null
-            val freeMemory = list.items.freeMemory?.description ?: return null
+            val totalStorage = list.items.totalStorage?.description ?: return null
+            val usedStorage = list.items.usedStorage?.description ?: return null
+            val freeStorage = list.items.freeStorage?.description ?: return null
             val recordState = list.items.recordState?.description ?: return null
             val captureState = list.items.captureState?.description ?: return null
             val autoPowerOff = list.items.autoPowerOff?.description ?: return null
@@ -336,9 +336,9 @@ class BTWidgetInfoResponseCamera(
             return BTWidgetInfoResponseCamera(
                 battery,
                 BatteryState.fromString(batteryState) ?: BatteryState.NO_CHARGE,
-                totalMemory,
-                usedMemory,
-                freeMemory,
+                totalStorage,
+                usedStorage,
+                freeStorage,
                 CaptureState.fromString(recordState) ?: CaptureState.NONE,
                 CaptureState.fromString(captureState) ?: CaptureState.NONE,
                 autoPowerOff,

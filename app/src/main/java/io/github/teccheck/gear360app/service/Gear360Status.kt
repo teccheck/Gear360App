@@ -3,9 +3,9 @@ package io.github.teccheck.gear360app.service
 data class Gear360Status(
     val battery: Int? = null,
     val batteryState: BatteryState? = null,
-    val totalMemory: Int? = null,
-    val usedMemory: Int? = null,
-    val freeMemory: Int? = null,
+    val totalStorage: Int? = null,
+    val usedStorage: Int? = null,
+    val freeStorage: Int? = null,
     val recordState: CaptureState? = null,
     val captureState: CaptureState? = null,
     val autoPowerOff: String? = null,
@@ -15,9 +15,9 @@ data class Gear360Status(
     fun modify(
         battery: Int? = null,
         batteryState: BatteryState? = null,
-        totalMemory: Int? = null,
-        usedMemory: Int? = null,
-        freeMemory: Int? = null,
+        totalStorage: Int? = null,
+        usedStorage: Int? = null,
+        freeStorage: Int? = null,
         recordState: CaptureState? = null,
         captureState: CaptureState? = null,
         autoPowerOff: String? = null,
@@ -27,9 +27,9 @@ data class Gear360Status(
         return Gear360Status(
             battery ?: this.battery,
             batteryState ?: this.batteryState,
-            totalMemory ?: this.totalMemory,
-            usedMemory ?: this.usedMemory,
-            freeMemory ?: this.freeMemory,
+            totalStorage ?: this.totalStorage,
+            usedStorage ?: this.usedStorage,
+            freeStorage ?: this.freeStorage,
             recordState ?: this.recordState,
             captureState ?: this.captureState,
             autoPowerOff ?: this.autoPowerOff,
@@ -42,9 +42,9 @@ data class Gear360Status(
         return modify(
             status.battery,
             status.batteryState,
-            status.totalMemory,
-            status.usedMemory,
-            status.freeMemory,
+            status.totalStorage,
+            status.usedStorage,
+            status.freeStorage,
             status.recordState,
             status.captureState,
             status.autoPowerOff,
@@ -68,6 +68,6 @@ data class Gear360Status(
     }
 
     override fun toString(): String {
-        return "Gear360Status(battery=$battery, batteryState=$batteryState, totalMemory=$totalMemory, usedMemory=$usedMemory, freeMemory=$freeMemory, recordState=$recordState, captureState=$captureState, autoPowerOff=$autoPowerOff, recordableTime=$recordableTime, capturableCount=$capturableCount)"
+        return "Gear360Status(battery=$battery, batteryState=$batteryState, totalMemory=$totalStorage, usedMemory=$usedStorage, freeMemory=$freeStorage, recordState=$recordState, captureState=$captureState, autoPowerOff=$autoPowerOff, recordableTime=$recordableTime, capturableCount=$capturableCount)"
     }
 }

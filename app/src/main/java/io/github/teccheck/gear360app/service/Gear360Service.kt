@@ -1,7 +1,6 @@
 package io.github.teccheck.gear360app.service
 
 import android.app.Service
-import android.bluetooth.BluetoothManager
 import android.content.Intent
 import android.location.Criteria
 import android.location.Location
@@ -28,7 +27,6 @@ import io.github.teccheck.gear360app.bluetooth.MessageHandler
 import io.github.teccheck.gear360app.bluetooth.MessageLog
 import io.github.teccheck.gear360app.bluetooth.MessageSender
 import io.github.teccheck.gear360app.utils.DeviceDescription
-import io.github.teccheck.gear360app.utils.SettingsHelper
 import io.github.teccheck.gear360app.utils.WifiUtils
 
 private const val TAG = "Gear360Service"
@@ -301,9 +299,9 @@ class Gear360Service : Service() {
                     Gear360Status(
                         message.battery,
                         message.batteryState,
-                        message.totalMemory,
-                        message.usedMemory,
-                        message.freeMemory,
+                        message.totalStorage,
+                        message.usedStorage,
+                        message.freeStorage,
                         message.recordState,
                         message.captureState,
                         message.autoPowerOff,
