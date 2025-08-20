@@ -58,14 +58,24 @@ data class Gear360Status(
         return false
     }
 
-    fun recordableTimeString(): String {
-        val time = recordableTime ?: return "---"
+    fun recordableTimeString(): String? {
+        val time = recordableTime ?: return null
         val hours = (time / 3600).toString().padStart(2, '0')
         val minutes = ((time / 60) % 60).toString().padStart(2, '0')
         val seconds = (time % 60).toString().padStart(2, '0')
 
         return "$hours:$minutes:$seconds"
     }
+
+    fun usedStoragePercentage(): Int? {
+        if (!hasStorage()) return null
+        val used = usedStorage ?: return  null
+        val total = totalStorage ?: return null
+
+        return 100 * used / total
+    }
+
+    fun hasStorage(): Boolean = totalStorage != 0
 
     override fun toString(): String {
         return "Gear360Status(battery=$battery, batteryState=$batteryState, totalMemory=$totalStorage, usedMemory=$usedStorage, freeMemory=$freeStorage, recordState=$recordState, captureState=$captureState, autoPowerOff=$autoPowerOff, recordableTime=$recordableTime, capturableCount=$capturableCount)"

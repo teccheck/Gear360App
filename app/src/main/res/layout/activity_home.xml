@@ -22,6 +22,18 @@
             app:layout_constraintTop_toTopOf="parent"
             app:srcCompat="@drawable/battery_high" />
 
+        <TextView
+            android:id="@+id/storage_indicator"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="16dp"
+            android:layout_marginTop="16dp"
+            android:gravity="center"
+            app:drawableStartCompat="@drawable/baseline_sd_storage_24"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            tools:text="99%" />
+
         <LinearLayout
             android:id="@+id/home_page_phone_camera"
             android:layout_width="wrap_content"

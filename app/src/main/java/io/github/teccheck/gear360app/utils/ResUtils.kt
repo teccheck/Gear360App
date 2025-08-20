@@ -19,7 +19,7 @@ object ResUtils {
     }
 
     @DrawableRes
-    fun getBatteryIcon(value: Int, state: BatteryState) = when(state) {
+    fun getBatteryIcon(value: Int, state: BatteryState) = when (state) {
         BatteryState.NORMAL -> when (value) {
             1 -> R.drawable.battery_low
             2 -> R.drawable.battery_medium
@@ -38,4 +38,9 @@ object ResUtils {
         BatteryState.ERROR_TEMP -> R.drawable.thermometer_alert
         else -> R.drawable.battery_unknown
     }
+
+    @DrawableRes
+    fun getStorageIcon(hasStorage: Boolean) =
+        if (hasStorage) R.drawable.baseline_sd_storage_24
+        else R.drawable.baseline_sd_card_alert_24
 }

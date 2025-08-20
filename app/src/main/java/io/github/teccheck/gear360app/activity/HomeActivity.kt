@@ -7,12 +7,14 @@ import android.util.Log
 import android.view.View
 import android.widget.Button
 import android.widget.ImageView
+import android.widget.TextView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.github.teccheck.gear360app.R
 import io.github.teccheck.gear360app.service.BatteryState
 import io.github.teccheck.gear360app.service.ConnectionState
 import io.github.teccheck.gear360app.utils.DeviceDescription
+import io.github.teccheck.gear360app.utils.DisplayStringUtils
 import io.github.teccheck.gear360app.utils.ResUtils
 import io.github.teccheck.gear360app.utils.SettingsHelper
 import io.github.teccheck.gear360app.widget.ConnectionDots
@@ -27,6 +29,7 @@ class HomeActivity : BaseActivity() {
     private lateinit var connectButton: Button
     private lateinit var selectButton: Button
     private lateinit var batteryIndicator: ImageView
+    private lateinit var storageIndicator: TextView
     private lateinit var recyclerView: RecyclerView
 
     private var selectedDevice: DeviceDescription? = null
@@ -39,6 +42,7 @@ class HomeActivity : BaseActivity() {
         connectionDots = findViewById(R.id.dots)
         connectionGear = findViewById(R.id.connect_camera_image)
         batteryIndicator = findViewById(R.id.battery_indicator)
+        storageIndicator = findViewById(R.id.storage_indicator)
         recyclerView = findViewById(R.id.recycler)
 
         setDeviceConnectivityIndicator(false)
@@ -73,14 +77,24 @@ class HomeActivity : BaseActivity() {
                     it.batteryState ?: BatteryState.NO_CHARGE
                 )
             )
+
+            storageIndicator.text = DisplayStringUtils.percentage(this, it.usedStoragePercentage())
+            storageIndicator.setCompoundDrawablesRelativeWithIntrinsicBounds(
+                ResUtils.getStorageIcon(
+                    it.hasStorage()
+                ), 0, 0, 0
+            )
         }
     }
 
     override fun onConnectionStateChanged(state: ConnectionState) {
         setGearConnectivityIndicator(state)
         setDeviceConnectivityIndicator(state != ConnectionState.INVALID)
-        batteryIndicator.visibility =
+
+        val statusVisibility =
             if (state == ConnectionState.CONNECTED) View.VISIBLE else View.INVISIBLE
+        batteryIndicator.visibility = statusVisibility
+        storageIndicator.visibility = statusVisibility
     }
 
     private fun startRecyclerView() {

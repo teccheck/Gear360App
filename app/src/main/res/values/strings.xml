@@ -88,4 +88,8 @@
     <!-- Messages Activity -->
     <string name="sender_phone">Phone</string>
     <string name="sender_camera">Camera</string>
+
+    <!-- MISC -->
+    <string name="percentage">%d%%</string>
+    <string name="no_value">---</string>
 </resources>
