@@ -4,11 +4,13 @@ import android.content.Intent
 import android.content.res.ColorStateList
 import android.os.*
 import android.util.Log
+import android.view.View
 import android.widget.Button
 import android.widget.ImageView
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import io.github.teccheck.gear360app.R
+import io.github.teccheck.gear360app.service.BatteryState
 import io.github.teccheck.gear360app.service.ConnectionState
 import io.github.teccheck.gear360app.utils.DeviceDescription
 import io.github.teccheck.gear360app.utils.ResUtils
@@ -24,6 +26,7 @@ class HomeActivity : BaseActivity() {
     private lateinit var connectionGear: ImageView
     private lateinit var connectButton: Button
     private lateinit var selectButton: Button
+    private lateinit var batteryIndicator: ImageView
     private lateinit var recyclerView: RecyclerView
 
     private var selectedDevice: DeviceDescription? = null
@@ -35,6 +38,7 @@ class HomeActivity : BaseActivity() {
         connectionDevice = findViewById(R.id.connect_phone_image)
         connectionDots = findViewById(R.id.dots)
         connectionGear = findViewById(R.id.connect_camera_image)
+        batteryIndicator = findViewById(R.id.battery_indicator)
         recyclerView = findViewById(R.id.recycler)
 
         setDeviceConnectivityIndicator(false)
@@ -61,11 +65,21 @@ class HomeActivity : BaseActivity() {
 
     override fun onGearServiceConnected() {
         setDeviceConnectivityIndicator(true)
+        gear360Service?.gear360Status?.observe(this) {
+            batteryIndicator.setImageResource(
+                ResUtils.getBatteryIcon(
+                    it.battery ?: 0,
+                    it.batteryState ?: BatteryState.NO_CHARGE
+                )
+            )
+        }
     }
 
     override fun onConnectionStateChanged(state: ConnectionState) {
         setGearConnectivityIndicator(state)
         setDeviceConnectivityIndicator(state != ConnectionState.INVALID)
+        batteryIndicator.visibility =
+            if (state == ConnectionState.CONNECTED) View.VISIBLE else View.INVISIBLE
     }
 
     private fun startRecyclerView() {
