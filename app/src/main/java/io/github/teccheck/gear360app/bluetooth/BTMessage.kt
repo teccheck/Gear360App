@@ -66,6 +66,9 @@ enum class MsgId {
 
     @Json(name = "bigdata-req")
     BIGDATA_REQ,
+
+    @Json(name = "notify")
+    NOTIFY,
 }
 
 @JsonClass(generateAdapter = true)
